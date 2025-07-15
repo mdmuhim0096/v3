@@ -9,7 +9,7 @@ const Accepfriends = () => {
     useEffect(() => {
         const get_accept = async () => {
             try {
-                const res = await axios.get("https://node-v1-tc13.onrender.com/api/friend/friend_requests", { withCredentials: true });
+                const res = await axios.get(server_port + "/api/friend/friend_requests", { withCredentials: true });
                 setAccept(res.data.data);
             } catch (error) {
                 console.log(error);
@@ -33,7 +33,7 @@ const Accepfriends = () => {
                 accepts.map((data, index) => (
                     <div className='flex justify-between items-center w-full sm:w-6/12 mx-auto rounded-md my-4 p-2 bg-indigo-950' key={index}>
                         <div className='flex justify-around items-center gap-5'>
-                            <img className='w-12 h-12  md:w-20 md:h-20 rounded-full' src={server_port + data.sender.image} />
+                            <img className='w-12 h-12  md:w-20 md:h-20 rounded-full' src={server_port + "/" + data.sender.image} />
                             <h4>{data.sender.name}</h4>
                         </div>
                         <div className='flex justify-around items-center gap-3 sm:gap-5'>

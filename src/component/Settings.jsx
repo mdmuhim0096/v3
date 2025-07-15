@@ -5,6 +5,7 @@ import { ArrowLeft, RotateCcw, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ToggleBtn from "./ToggleBtn";
 import { ToastContainer, toast } from "react-toastify"
+import { server_port } from './api';
 
 const Settings = () => {
 
@@ -19,25 +20,25 @@ const Settings = () => {
         const myColor = color.split("-");
         myColor[0] = "text";
         const textColor = myColor.join("-");
-        axios.post("https://node-v1-tc13.onrender.com/api/people/textcolor", { textColor, id });
+        axios.post(server_port + "/api/people/textcolor", { textColor, id });
         location.reload();
     }
 
     const doChangeBGColor = (themebg) => {
         const id = myDBid();
-        axios.post("https://node-v1-tc13.onrender.com/api/people/themebg", { themebg, id });
+        axios.post(server_port + "/api/people/themebg", { themebg, id });
         location.reload();
     }
 
     const doChangeTextStyle = (textStyle) => {
         const id = myDBid();
-        axios.post("https://node-v1-tc13.onrender.com/api/people/textstyle", { textStyle, id });
+        axios.post(server_port + "/api/people/textstyle", { textStyle, id });
         location.reload();
     }
 
     const doChangePostBg = (postbg) => {
         const id = myDBid();
-        axios.post("https://node-v1-tc13.onrender.com/api/people/postbg", { postbg, id });
+        axios.post(server_port + "/api/people/postbg", { postbg, id });
         location.reload();
     }
 
@@ -50,7 +51,7 @@ const Settings = () => {
     const getPermision = async () => {
         setIsLoad(true)
         try {
-            axios.post("https://node-v1-tc13.onrender.com/api/people/checkauth", { email, password })
+            axios.post(server_port + "/api/people/checkauth", { email, password })
                 .then(res => {
                     setIsLoad(false);
                     toast.success("yes " + res.data.message.toLowerCase());
@@ -72,7 +73,7 @@ const Settings = () => {
         setIsLoad(true);
 
         try {
-            axios.post("https://node-v1-tc13.onrender.com/api/people/restpassword", { password: _newPassword_ }, { withCredentials: true })
+            axios.post(server_port + "/api/people/restpassword", { password: _newPassword_ }, { withCredentials: true })
                 .then(res => {
                     setIsLoad(false);
                     toast.success("yes " + res.data.message.toLowerCase());
@@ -89,7 +90,7 @@ const Settings = () => {
     const [load, setLoad] = useState(0);
     useEffect(() => {
         const getStatus = async () => {
-            const res = await axios.get("https://node-v1-tc13.onrender.com/api/people/userData", { withCredentials: true });
+            const res = await axios.get(server_port + "/api/people/userData", { withCredentials: true });
             localStorage.setItem("activeStatus", res.data.data.isActive);
             setIsActive(res.data.data.isActive);
         }
@@ -99,7 +100,7 @@ const Settings = () => {
     const handelStatus = () => {
         setLoad(load + 1);
         const userId = myDBid();
-        axios.post(`https://node-v1-tc13.onrender.com/api/people/${isActive ? "dactiveuser" : "activeuser"}`, { userId });
+        axios.post(server_port +`/api/people/${isActive ? "dactiveuser" : "activeuser"}`, { userId });
         localStorage.setItem("isTurn", isActive ? false : true)
     }
 

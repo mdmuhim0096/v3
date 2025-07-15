@@ -8,7 +8,7 @@ const Removemember = () => {
     const [load, setLoad] = useState(0);
     useEffect(() => {
         const getMembers = async () => {
-            await axios.get("https://node-v1-tc13.onrender.com/api/group/members/"+localStorage.getItem("groupId")).then(res => {
+            await axios.get(server_port + "/api/group/members/"+localStorage.getItem("groupId")).then(res => {
                 setMembers(res.data.members);
             })
         }
@@ -19,7 +19,7 @@ const Removemember = () => {
     console.log(members)
 
     async function remove(userId){
-        axios.post("https://node-v1-tc13.onrender.com/api/group/removemember/" + localStorage.getItem("groupId"), {userId})
+        axios.post(server_port + "/api/group/removemember/" + localStorage.getItem("groupId"), {userId})
         setLoad(load + 1)
     }
     return (

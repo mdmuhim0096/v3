@@ -2,12 +2,13 @@ import React, { useEffect } from 'react'
 import axios from 'axios';
 import { Plus } from "lucide-react"
 import { useLocation } from "react-router-dom";
+import { server_port } from './api';
 
 const Groupsettings = () => {
     const friends = useLocation()?.state.friends;
 
     const add = (members) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/group/addmember/"+localStorage.getItem("groupId"), {members});
+        axios.post(server_port + "/api/group/addmember/"+localStorage.getItem("groupId"), {members});
     }
 
     return (

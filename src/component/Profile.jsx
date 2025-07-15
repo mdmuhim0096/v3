@@ -13,7 +13,7 @@ const Profile = () => {
     useEffect(() => {
         const getdata = async () => {
             try {
-                const res = await axios.get("https://node-v1-tc13.onrender.com/api/people/userData", { withCredentials: true });
+                const res = await axios.get(server_port + "/api/people/userData", { withCredentials: true });
                 const data = res.data.data;
                 setUser(res.data.data);
                 localStorage.setItem("myId", data._id);
@@ -41,7 +41,7 @@ const Profile = () => {
     const [maritalStatus, setmaritalStatus] = useState("");
 
     const addBio = (e) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/addbio", { bio: e }, { withCredentials: true })
+        axios.post(server_port + "/api/people/addbio", { bio: e }, { withCredentials: true })
         setIsBio(false)
         setTimeout(() => { setLoad(load + 1) }, 200)
     }
@@ -49,38 +49,38 @@ const Profile = () => {
     const updateProfileImage = async () => {
         const fd = new FormData();
         fd.append("img", file)
-        axios.post("https://node-v1-tc13.onrender.com/api/people/updateProfileImage", fd, { withCredentials: true });
+        axios.post(server_port + "/api/people/updateProfileImage", fd, { withCredentials: true });
         setx(false);
         setLoad(load + 1);
     }
 
     const updateProfileName = async () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/updateProfileName", { name }, { withCredentials: true });
+        axios.post(server_port + "/api/people/updateProfileName", { name }, { withCredentials: true });
         sety(false);
         setLoad(load + 1);
     }
 
 
     const updateProfileEmail = async () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/updateProfileEmail", { email }, { withCredentials: true });
+        axios.post(server_port + "/api/people/updateProfileEmail", { email }, { withCredentials: true });
         seta(false);
         setLoad(load + 1);
     }
 
     const updateProfileGender = async () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/updateProfileGender", { gender }, { withCredentials: true });
+        axios.post(server_port + "/api/people/updateProfileGender", { gender }, { withCredentials: true });
         setb(false);
         setLoad(load + 1);
     }
 
     const updateProfileAge = async () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/updateProfileAge", { age }, { withCredentials: true });
+        axios.post(server_port + "/api/people/updateProfileAge", { age }, { withCredentials: true });
         setc(false);
         setLoad(load + 1);
     }
 
     const updateProfileMaritaStatus = async () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/updateProfileMaritaStatus", { maritalStatus }, { withCredentials: true });
+        axios.post(server_port + "/api/people/updateProfileMaritaStatus", { maritalStatus }, { withCredentials: true });
         setd(false);
         setLoad(load + 1);
     }
@@ -103,8 +103,8 @@ const Profile = () => {
             </div>
             <div className={`w-full h-full overflow-hidden flex justify-center items-center`}>
                 <div className='w-full h-64 relative overflow-hidden'>
-                    <img className='object-fill w-full h-full' src={server_port + user.image} title='cover image' />
-                    <img src={server_port + user.image} className='w-24 h-2w-24 border-2 rounded-full absolute bottom-0 left-0' title='profile image' />
+                    <img className='object-fill w-full h-full' src={server_port + "/" + user.image} title='cover image' />
+                    <img src={server_port + "/" + user.image} className='w-24 h-2w-24 border-2 rounded-full absolute bottom-0 left-0' title='profile image' />
                     <div className={`absolute top-0 left-0 flex justify-center items-center p-5 w-full h-full bg-slate-900 z-50 flex-col ${x ? "block" : "hidden"}`}>
                         <X  className='absolute top-2 right-2' onClick={() => {setx(false)}}/>
                         <div className='w-auto border flex justify-center items-center bg-gradient-to-r from-emerald-400 to-cyan-400 p-2 rounded-md'>
@@ -190,7 +190,7 @@ const Profile = () => {
                     <div className='bg-slate-800 h-full w-full rounded-md p-1'>
                         <h1>Friends</h1>
                         <div className='my-3 flex justify-start items-center'>{user.friends?.map((data, index) => (
-                            <img key={index} className={`w-5 h-5 rounded-full ${index > 0 ? "-ml-2" : ""}`} src={server_port + data.image} />
+                            <img key={index} className={`w-5 h-5 rounded-full ${index > 0 ? "-ml-2" : ""}`} src={server_port + "/" + data.image} />
                         ))}</div>
                     </div>
                 </div>

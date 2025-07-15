@@ -12,7 +12,7 @@ const Notification = () => {
     const [load, setLoad] = useState(0);
     useEffect(() => {
         const get_noti = async () => {
-            const res = await axios.get(`https://node-v1-tc13.onrender.com/api/noti/get_noti/${myId}`);
+            const res = await axios.get(server_port +`/api/noti/get_noti/${myId}`);
             const data = res.data;
             setNoti(data);
         }
@@ -20,7 +20,7 @@ const Notification = () => {
     }, [load]);
 
     const deleteNotification = (id) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/noti/delete", { id }).then(res => {
+        axios.post(server_port + "/api/noti/delete", { id }).then(res => {
             toast.success(res.data.message);
         })
         setLoad(load + 1);

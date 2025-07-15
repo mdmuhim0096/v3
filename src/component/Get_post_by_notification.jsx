@@ -29,7 +29,7 @@ const Get_post_by_notification = () => {
     useEffect(() => {
         try {
             const getPublicPost = async () => {
-                const res = await axios.get(`https://node-v1-tc13.onrender.com/api/post/getpostbyid/${postId}`);
+                const res = await axios.get(server_port+`/api/post/getpostbyid/${postId}`);
                 setPost(Array.isArray(res.data.post) ? res.data.post : [res.data.post]);
             }
             getPublicPost();
@@ -52,7 +52,7 @@ const Get_post_by_notification = () => {
 
     const getPostInfo = async (id) => {
         try {
-            const res = await axios.get(`https://node-v1-tc13.onrender.com/api/post/postinfo/${id}`);
+            const res = await axios.get(server_port+`/api/post/postinfo/${id}`);
             setPost_info(res.data.singlePost);
             setCommentReplay(res.data.singlePost.comments)
             console.log(res.data.singlePost.comments);
@@ -66,12 +66,12 @@ const Get_post_by_notification = () => {
     }, [post_id], load)
 
     const doLike = (postId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/addlike", { postId }, { withCredentials: true })
+        axios.post(server_port + "/api/post/addlike", { postId }, { withCredentials: true })
     }
 
     const addComment = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addcomment", { comment: commentOrReplay, post_id }, { withCredentials: true })
+            axios.post(server_port + "/api/post/addcomment", { comment: commentOrReplay, post_id }, { withCredentials: true })
             setCommentOrReplay("")
             notify("comment added ☺")
         }
@@ -79,7 +79,7 @@ const Get_post_by_notification = () => {
 
     const doReplay = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addreplay", { replyText: commentOrReplay, postId: post_id, commentId }, { withCredentials: true })
+            axios.post(server_port + "/api/post/addreplay", { replyText: commentOrReplay, postId: post_id, commentId }, { withCredentials: true })
         }
         setCommentOrReplay("")
         notify("replay added ☺")
@@ -87,7 +87,7 @@ const Get_post_by_notification = () => {
 
     const doInnerRplay = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addinnerreplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId }, { withCredentials: true })
+            axios.post(server_port + "/api/post/addinnerreplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId }, { withCredentials: true })
         }
         setCommentOrReplay("")
         notify("replay added ☺")
@@ -99,7 +99,7 @@ const Get_post_by_notification = () => {
 
     const doNestedInnerReplay = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addNestedInnerReplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId, replayOf, nestedId }, { withCredentials: true })
+            axios.post(server_port + "/api/post/addNestedInnerReplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId, replayOf, nestedId }, { withCredentials: true })
         }
         setCommentOrReplay("")
         notify("replay added ☺")
@@ -107,15 +107,15 @@ const Get_post_by_notification = () => {
     }
 
     const addLike_comment = () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/addlike_comment", { postId: post_id, commentId }, { withCredentials: true });
+        axios.post(server_port + "/api/post/addlike_comment", { postId: post_id, commentId }, { withCredentials: true });
     }
 
     const addlike_replay = (repId, commentId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/addlike_replay", { postId: post_id, commentId, repId }, { withCredentials: true });
+        axios.post(server_port + "/api/post/addlike_replay", { postId: post_id, commentId, repId }, { withCredentials: true });
     }
 
     const inner_addlike_replay = (repId, commentId, nestId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/inner_addlike_replay", { postId: post_id, commentId, repId, nestId }, { withCredentials: true });
+        axios.post(server_port + "/api/post/inner_addlike_replay", { postId: post_id, commentId, repId, nestId }, { withCredentials: true });
     }
 
     const inputRef = useRef();

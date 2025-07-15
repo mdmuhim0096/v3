@@ -3,6 +3,7 @@ import gsap from "gsap"
 import axios from "axios"
 import { Link, useNavigate } from "react-router-dom";
 import { Leaf } from "lucide-react";
+import { server_port } from './api';
 const Signup = () => {
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
@@ -23,7 +24,7 @@ const Signup = () => {
         fd.append("pass", password)
         fd.append("img", image)
         fd.append("gender", gender)
-        axios.post("https://node-v1-tc13.onrender.com/api/people/signup", fd, { withCredentials: true });
+        axios.post(server_port + "/api/people/signup", fd, { withCredentials: true });
         setTimeout(() => { navigate("/") }, 500);
     }
     return (

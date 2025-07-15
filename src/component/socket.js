@@ -1,5 +1,6 @@
 import io from "socket.io-client";
-const socket = io("https://node-v1-tc13.onrender.com", {
+import { server_port } from "./api";
+const socket = io(server_port, {
     transports: ["websocket"],
     withCredentials: true
 });

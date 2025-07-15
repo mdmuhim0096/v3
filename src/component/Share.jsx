@@ -12,7 +12,7 @@ const Share = () => {
 
         const get_my_groups = async () => {
             try {
-                const res = await axios.get("https://node-v1-tc13.onrender.com/api/group/myGroup/" + localStorage.getItem("myId"));
+                const res = await axios.get(server_port + "/api/group/myGroup/" + localStorage.getItem("myId"));
                 setGroup(res.data.groups.groups)
             } catch (error) {
                 console.log(error);
@@ -33,14 +33,14 @@ const Share = () => {
         const dateTime = getTime();
         const realTime = dateTime.date + " " + dateTime.actual_time;
         const myId = localStorage.getItem("myId");
-        axios.post("https://node-v1-tc13.onrender.com/api/share/sharechat", { senderId: myId, shareId, recevireId, user: myId, realTime });
+        axios.post(server_port + "/api/share/sharechat", { senderId: myId, shareId, recevireId, user: myId, realTime });
     }
 
     const createGroupShare = (shareId, group) => {
         const dateTime = getTime();
         const realTime = dateTime.date + " " + dateTime.actual_time;
         const myId = localStorage.getItem("myId");
-        axios.post("https://node-v1-tc13.onrender.com/api/share/sharegroup", { sender: myId, realTime, shareId, group, messageType: "share" });
+        axios.post(server_port + "/api/share/sharegroup", { sender: myId, realTime, shareId, group, messageType: "share" });
     }
 
     return (

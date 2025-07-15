@@ -41,7 +41,7 @@ const ChatRoom = () => {
     const focus = () => { inputRef.current.focus() };
 
     const myData_ = async () => {
-        const res = await axios.get("https://node-v1-tc13.onrender.com/api/people/userData", { withCredentials: true });
+        const res = await axios.get(server_port + "/api/people/userData", { withCredentials: true });
         localStorage.setItem("myId", res.data.data._id);
         localStorage.setItem("myImage", res.data.data.image);
         localStorage.setItem("myName", res.data.data.name);
@@ -72,7 +72,7 @@ const ChatRoom = () => {
 
     const get_my_groups = async () => {
         try {
-            const res = await axios.get("https://node-v1-tc13.onrender.com/api/group/myGroup/" + localStorage.getItem("myId"));
+            const res = await axios.get(server_port + "/api/group/myGroup/" + localStorage.getItem("myId"));
             setGroups(res.data.groups.groups)
         } catch (error) {
             console.log(error);
@@ -103,12 +103,9 @@ const ChatRoom = () => {
 
     useEffect(() => {
         const handleIncomingCall = (data) => {
-            if (data.friendId === localStorage.getItem("myId")) {
-                localStorage.setItem("collerName", data.myName)
-                localStorage.setItem("collerImage", data.myImage)
-                document.getElementById("calltone")?.play();
-                localStorage.setItem("uniqueId_audio", data.uniqueId_audio)
-                navigate("/audiocall");
+            if (data.userId === localStorage.getItem("myId")) {
+                localStorage.setItem("callId__", data.callId);
+                navigate("/videocall");
             }
         };
 
@@ -119,7 +116,7 @@ const ChatRoom = () => {
     }, []);
 
     const get_chats = async (riciver, sender) => {
-        await axios.post("https://node-v1-tc13.onrender.com/api/people/getChat", { riciver, sender })
+        await axios.post(server_port + "/api/people/getChat", { riciver, sender })
             .then(res => {
                 setChat(res.data.data);
             })
@@ -212,7 +209,7 @@ const ChatRoom = () => {
     const getOurDesign = async (myId, _userId_) => {
 
         try {
-            const res = await axios.get(`https://node-v1-tc13.onrender.com/api/friend/ourstyle/${myId}/${_userId_}`);
+            const res = await axios.get(server_port + `/api/friend/ourstyle/${myId}/${_userId_}`);
             setOurDesign(res.data.design)
         } catch (err) {
             console.log(err);
@@ -242,7 +239,7 @@ const ChatRoom = () => {
             const riciver = localStorage.getItem("userId");
             const sender = localStorage.getItem("myId");
             const __mediafile__ = getMediaType(media, true);
-            const res = axios.post("https://node-v1-tc13.onrender.com/api/chat/upload", __mediafile__);
+            const res = axios.post(server_port + "/api/chat/upload", __mediafile__);
             const mediaUrl = (await res).data.mediaUrl;
             setMedia(undefined)
             setFileUrl(null);
@@ -280,19 +277,19 @@ const ChatRoom = () => {
     };
 
     const deleteMessage = (chatId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/chat/delete", { chatId });
+        axios.post(server_port + "/api/chat/delete", { chatId });
         socket.emit("__load_data__")
     }
 
     const unsentMessage = (chatId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/chat/unsent", { chatId });
+        axios.post(server_port + "/api/chat/unsent", { chatId });
         socket.emit("__load_data__");
     }
 
     const replayMessage = (chatId) => {
         const dateTime = getTime();
         const time = dateTime.date + " " + dateTime.actual_time;
-        axios.post("https://node-v1-tc13.onrender.com/api/chat/replaychat",
+        axios.post(server_port + "/api/chat/replaychat",
             { recevireId: localStorage.getItem("userId"), senderId: localStorage.getItem("myId"), time, user: localStorage.getItem("myId"), chatId, replay: message })
         socket.emit("__load_data__");
         setIsRplay(false);
@@ -307,7 +304,7 @@ const ChatRoom = () => {
     const doMessageTextItalic = () => {
         const myId = sender;
         const myfriendId = localStorage.getItem("userId");
-        axios.post(`https://node-v1-tc13.onrender.com/api/friend/doMessageItalic`, { isToggleForBase: isItalic === true || isItalic === "true" ? false : true, myId, myfriendId }).then(res => {
+        axios.post(server_port + "/api/friend/doMessageItalic", { isToggleForBase: isItalic === true || isItalic === "true" ? false : true, myId, myfriendId }).then(res => {
             localStorage.setItem("______isItalic", res.data.isItalic);
             setIsItalic(res.data.isItalic);
         });
@@ -321,7 +318,7 @@ const ChatRoom = () => {
             const colorNameArray = mycolor.split("-");
             colorNameArray[0] = "text";
             const color = colorNameArray.join("-");
-            axios.post(`https://node-v1-tc13.onrender.com/api/friend/doFontColorChange`, { color, myId, myFriendId });
+            axios.post(server_port + "/api/friend/doFontColorChange", { color, myId, myFriendId });
             setLoad(load + 1);
         } catch (err) {
             console.log(err)
@@ -331,14 +328,14 @@ const ChatRoom = () => {
     const doChangeBgColor = (bgColor, bgImage, bgType) => {
         const myId = sender;
         const myFriendId = localStorage.getItem("userId");
-        axios.post(`https://node-v1-tc13.onrender.com/api/friend/doChatBgChange`, { bgColor, bgImage, bgType, myId, myFriendId });
+        axios.post(server_port + "/api/friend/doChatBgChange", { bgColor, bgImage, bgType, myId, myFriendId });
         setLoad(load + 1);
     }
 
     const doChangeFontFamily = (family) => {
         const myId = localStorage.getItem("myId");
         const myFriendId = localStorage.getItem("userId");
-        axios.post(`https://node-v1-tc13.onrender.com/api/friend/doFontFamilyChange`, { family, myId, myFriendId });
+        axios.post(server_port + "/api/friend/doFontFamilyChange", { family, myId, myFriendId });
         setLoad(load + 6);
     }
 
@@ -367,7 +364,7 @@ const ChatRoom = () => {
     }
 
     const safarateUser = async (id) => {
-        const res = await axios.get("https://node-v1-tc13.onrender.com/api/people/friendData/" + id);
+        const res = await axios.get(server_port + "/api/people/friendData/" + id);
         setSafarateUser(res.data.user);
         localStorage.setItem("userImage", res.data.user.image)
         localStorage.setItem("userName", res.data.user.name)
@@ -389,7 +386,7 @@ const ChatRoom = () => {
 
     const blockUser = (key) => {
         const friendId = localStorage.getItem("userId"), myId = localStorage.getItem("myId");
-        axios.post("https://node-v1-tc13.onrender.com/api/friend/" + key, { friendId, myId })
+        axios.post(server_port + "/api/friend/" + key, { friendId, myId })
         socket.emit("__load_data__");
         getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"));
     }
@@ -399,14 +396,14 @@ const ChatRoom = () => {
         const dateTime = getTime();
         const firstuser = [localStorage.getItem("myId"), localStorage.getItem("userId")]
         const realTime = dateTime.date + " " + dateTime.actual_time;
-        axios.post("https://node-v1-tc13.onrender.com/api/group/create", { myId, realTime, groupName, firstuser });
+        axios.post(server_port + "/api/group/create", { myId, realTime, groupName, firstuser });
         setGroupName("");
     }
 
     const [groupChats, setGroupChat] = useState([]);
 
     const get_group_chats = async (id) => {
-        const res = await axios.get("https://node-v1-tc13.onrender.com/api/gchat/getchat/" + id);
+        const res = await axios.get(server_port + "/api/gchat/getchat/" + id);
         setGroupChat(res.data.chats);
     }
 
@@ -420,7 +417,7 @@ const ChatRoom = () => {
         fd.append("messageType", type);
         fd.append("sender", localStorage.getItem("myId"));
         fd.append("realTime", realTime);
-        axios.post("https://node-v1-tc13.onrender.com/api/gchat/createmedia", fd);
+        axios.post(server_port + "/api/gchat/createmedia", fd);
         setMedia(undefined);
         setFileUrl(null);
         setTimeout(() => {
@@ -440,7 +437,7 @@ const ChatRoom = () => {
         }
         const dateTime = getTime();
         const realTime = dateTime.date + " " + dateTime.actual_time;
-        axios.post("https://node-v1-tc13.onrender.com/api/gchat/createtext", { group, messageType: "text", sender: localStorage.getItem("myId"), content: message, realTime });
+        axios.post(server_port + "/api/gchat/createtext", { group, messageType: "text", sender: localStorage.getItem("myId"), content: message, realTime });
         setMessage("");
         get_group_chats(localStorage.getItem("groupId"));
         socket.emit("__load_data__");
@@ -455,7 +452,7 @@ const ChatRoom = () => {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        axios.post("https://node-v1-tc13.onrender.com/api/gchat/seenby", { messageId: entry.target.id, userId: localStorage.getItem("myId") });
+                        axios.post(server_port + "/api/gchat/seenby", { messageId: entry.target.id, userId: localStorage.getItem("myId") });
                         observer.unobserve(entry.target);
                         setTimeout(() => {
                             socket.emit("__load_data__");
@@ -498,7 +495,7 @@ const ChatRoom = () => {
     const [groupDesign, setGroupDesign] = useState("");
 
     const deleteGMesage = (message) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/gchat/deleteMessage", { group: localStorage.getItem("groupId"), message });
+        axios.post(server_port + "/api/gchat/deleteMessage", { group: localStorage.getItem("groupId"), message });
         setTimeout(() => {
             socket.emit("__load_data__");
         }, 70)
@@ -507,7 +504,7 @@ const ChatRoom = () => {
     const replayGChat = (rtext, mtext, image) => {
         const dateTime = getTime();
         const realTime = dateTime.date + " " + dateTime.actual_time;
-        axios.post("https://node-v1-tc13.onrender.com/api/gchat/reply", { rtext, messageType: "reply", sender, image, mtext, realTime, group: localStorage.getItem("groupId") });
+        axios.post(server_port + "/api/gchat/reply", { rtext, messageType: "reply", sender, image, mtext, realTime, group: localStorage.getItem("groupId") });
         setIsRplay(false);
         setMessage("");
         setTimeout(() => {
@@ -517,7 +514,7 @@ const ChatRoom = () => {
 
 
     const changeBgGroup = (bgColor, bgImage, bgType) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/group/changebg", { bgColor, bgImage, bgType, group: localStorage.getItem("groupId") });
+        axios.post(server_port + "/api/group/changebg", { bgColor, bgImage, bgType, group: localStorage.getItem("groupId") });
     }
 
     async function vioceHandeler(e) {
@@ -525,7 +522,7 @@ const ChatRoom = () => {
         const realTime = dateTime.date + " " + dateTime.actual_time;
         let formData = new FormData();
         const sender = localStorage.getItem("myId"), riciver = localStorage.getItem("userId");
-        const url = `https://node-v1-tc13.onrender.com/api/${isCahtTab ? "chat/upload" : "gchat/createmedia"}`
+        const url = server_port + `/api/${isCahtTab ? "chat/upload" : "gchat/createmedia"}`
         formData.append("audio", e, "voice.mp3");
         if (!isCahtTab) {
             formData.append("group", localStorage.getItem("groupId"));
@@ -578,20 +575,20 @@ const ChatRoom = () => {
     async function changeGroupImage() {
         const fd = new FormData();
         fd.append("img", groupImage)
-        await axios.post("https://node-v1-tc13.onrender.com/api/group/changeImage/" + localStorage.getItem("groupId"), fd).then(res => localStorage.setItem("userImage", res.data.img))
+        await axios.post(server_port + "/api/group/changeImage/" + localStorage.getItem("groupId"), fd).then(res => localStorage.setItem("userImage", res.data.img))
         setGroupImage(null)
         setLoad(load + 2)
     }
 
     async function changeGeroupName() {
-        await axios.post("https://node-v1-tc13.onrender.com/api/group/changeName", { groupName: pgname, groupId: localStorage.getItem("groupId") }).then(res => localStorage.setItem("userName", res.data.name));
+        await axios.post(server_port + "/api/group/changeName", { groupName: pgname, groupId: localStorage.getItem("groupId") }).then(res => localStorage.setItem("userName", res.data.name));
         setGname(false);
         setLoad(load + 1);
         setPGname("")
     }
 
     async function leftfromgroup() {
-        await axios.post("https://node-v1-tc13.onrender.com/api/people/leftfromgroup", { user: localStorage.getItem("myId"), group: localStorage.getItem("groupId") });
+        await axios.post(server_port + "/api/people/leftfromgroup", { user: localStorage.getItem("myId"), group: localStorage.getItem("groupId") });
         setLoad(load + 1);
     }
 
@@ -626,7 +623,7 @@ const ChatRoom = () => {
                         setIsChatTap(true)
                     }}
                         className='w-full flex items-center gap-4 my-4 cursor-pointer p-2 hover:bg-indigo-950 hover:border-blue hover:border rounded-md' key={index}>
-                        <img className='w-12 h-12 rounded-full' src={server_port + data.image} />
+                        <img className='w-12 h-12 rounded-full' src={server_port + "/" +data.image} />
                         <div>
                             <h6 className='text-xs py-1 text-gray-600'>your friend</h6>
                             <h4 className='text-sm'>{data.name}</h4>
@@ -635,9 +632,10 @@ const ChatRoom = () => {
                     </div>
                 ))}
                 </div>
-                <hr />
-                <h5>groups</h5>
-                <div className=''>
+
+                <div className={`${groups.length <= 0 ? "hidden": ""}`}>
+                    <hr />
+                    <h5>groups</h5>
                     {groups.map((data, index) => (
                         <div key={index} className='cursor-pointer' onClick={() => {
                             localStorage.setItem("userImage", data.groupImage);
@@ -648,11 +646,13 @@ const ChatRoom = () => {
                             setIsChatTap(false);
                             setGroupDesign(data.style);
                             localStorage.setItem("admin", data.admin);
+                            setIsBar(false)
                         }}>
                             <div className='flex justify-start items-center '>
                                 <img className='w-12 h-12 rounded-full' src={server_port + "/" + data.groupImage} alt="" />
                                 <h3>{data.name}</h3>
                             </div>
+
                         </div>
                     ))}
                 </div>
@@ -802,7 +802,7 @@ const ChatRoom = () => {
                         <div className='w-full flex items-center p-2 bg-indigo-950 rounded-lg justify-between sticky top-0 z-20'>
                             <ArrowLeft className='sm:hidden' onClick={() => { setIsBar(true) }} />
                             <div className='flex items-center justify-start gap-4'>
-                                <img className='rounded-full w-10 h-10' src={server_port + localStorage.getItem("userImage")} alt="" />
+                                <img className='rounded-full w-10 h-10' src={server_port + "/" + localStorage.getItem("userImage")} alt="" />
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
@@ -819,7 +819,7 @@ const ChatRoom = () => {
                                             <UsersRound />
                                             <Phone className='scale-50 -ml-2 mt-1' />
                                         </Link>
-                                        <Link className='flex' to={"/groupcallvideo"} state={{ roomId: "xxx", userId: localStorage.getItem("myId"), isDail: true }}>
+                                        <Link className='flex'  to={"/videocall"} state={{dail: true }}>
                                             <UsersRound />
                                             <Video className='scale-50 -ml-2 mt-1' />
                                         </Link>
@@ -838,14 +838,14 @@ const ChatRoom = () => {
                                 >
 
                                     <div className='relative my-4'>
-                                        <img className={`w-7 h-7 user rounded-full absolute bottom-1 ${message.senderId === sender ? "float-right right-0" : "float-left"}`} src={server_port + message.user.image} />
+                                        <img className={`w-7 h-7 user rounded-full absolute bottom-1 ${message.senderId === sender ? "float-right right-0" : "float-left"}`} src={server_port + "/" + message.user.image} />
                                         <div className={`mx-10 chat-bubble cursor-pointer sm:max-w-96`}>
                                             {
-                                                message.mediaUrl?.includes("image") ? (<img src={server_port + message.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message.mediaUrl?.includes("audio") ? (<audio controls className={`${!message.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
+                                                message.mediaUrl?.includes("image") ? (<img src={server_port + "/" +message.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message.mediaUrl?.includes("audio") ? (<audio controls className={`${!message.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
                                                     <source src={server_port + message.mediaUrl} type="audio/mp3" />
                                                 </audio>)
                                                     : message.mediaUrl?.includes("video") ? (<video className={!message.mediaUrl?.includes("video") ? "hidden" : ""} controls>
-                                                        <source src={server_port + message.mediaUrl} type="video/mp4" />
+                                                        <source src={server_port + "/" + message.mediaUrl} type="video/mp4" />
                                                     </video>) : message.mediaUrl === "unsent" ? "unsent" :
                                                         message.link.isLink ? (<a href={message.link.link} target='_blank' className='text-blue italic underline'><ShortText text={message.link.link} dot={4} width={window.innerWidth} range={15} /></a>) : message.link.link === "unsent" ? "unsent" : message.call?.callType ? (<div>
                                                             <div className='flex justify-between items-center'>
@@ -856,7 +856,7 @@ const ChatRoom = () => {
                                                         </div>) : message?.mediaUrl == "share" ?
 
                                                             <div>
-                                                                {message?.share?.image == true ? <img src={server_port + message.share.media} className='w-full h-full rounded-xl' /> : message.share.video == true ? <video src={server_port + message.share.media} controls className='w-full h-full rounded-xl'></video> : null}
+                                                                {message?.share?.image == true ? <img src={server_port + "/" + message.share.media} className='w-full h-full rounded-xl' /> : message.share.video == true ? <video src={server_port + message.share.media} controls className='w-full h-full rounded-xl'></video> : null}
                                                                 <Link to={"/get_post_by_notification"} state={{ postId: message.share._id }}>go to comment</Link>
                                                             </div>
 
@@ -865,11 +865,11 @@ const ChatRoom = () => {
                                                                     <h4 className={`absolute text-green-400 ${message.senderId === sender ? "-top-4 -left-4 -rotate-45" : "-top-4 -right-4 rotate-45"}`}>reply</h4>
                                                                     {message?.replay.chatId.mediaUrl == "share" ?
                                                                         <div>
-                                                                            {message?.replay.chatId?.share.image == true ? <img src={server_port + message?.replay.chatId?.share.media} className='w-full h-full rounded-xl' /> : <video src={server_port + message?.replay.chatId?.share.media} controls className='w-full h-full rounded-xl'></video>}
+                                                                            {message?.replay.chatId?.share.image == true ? <img src={server_port + "/" + message?.replay.chatId?.share.media} className='w-full h-full rounded-xl' /> : <video src={server_port + message?.replay.chatId?.share.media} controls className='w-full h-full rounded-xl'></video>}
                                                                         </div> :
                                                                         <div>
                                                                             {message?.replay?.chatId?.mediaUrl?.includes("image") ?
-                                                                                <img src={server_port + message?.replay.chatId?.mediaUrl} alt="" /> : message?.replay?.chatId?.mediaUrl?.includes("video") ? <video src={server_port + message?.replay.chatId?.mediaUrl} controls></video> : message?.replay?.chatId?.mediaUrl?.includes("audio") ? <audio src={server_port + message?.replay.chatId?.mediaUrl} controls /> : message?.replay.chatId.messageTextull}
+                                                                                <img src={server_port + "/" + message?.replay.chatId?.mediaUrl} alt="" /> : message?.replay?.chatId?.mediaUrl?.includes("video") ? <video src={server_port + message?.replay.chatId?.mediaUrl} controls></video> : message?.replay?.chatId?.mediaUrl?.includes("audio") ? <audio src={server_port + message?.replay.chatId?.mediaUrl} controls /> : message?.replay.chatId.messageTextull}
 
                                                                         </div>
                                                                     }
@@ -964,7 +964,7 @@ const ChatRoom = () => {
 
                                     <div className={`max-w-[50%] min-w-[20%] h-auto rounded-xl ${data.sender._id === sender ? " rounded-br-none" : "rounded-bl-none"} bg-blue-300 p-1 relative`}>
                                         {data.messageType == "reply" ? <span className={`inline-block absolute z-30 ${data.sender._id === sender ? "-left-5 -top-4 -rotate-45" : "-right-5 -top-4 rotate-45"}`}>reply</span> : null}
-                                        {data.messageType == "text" ? <h4 className='px-2'>{data.content}</h4> : data.messageType == "image" ? <img src={server_port + data.content} className='rounded-3xl' /> : data.messageType == "video" ? <video src={server_port + data.content} controls className='rounded-3xl' ></video> : data.messageType == "audio" ? <audio src={server_port + data.content} controls /> : data.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data.content}</a> : data.messageType == "reply" ?
+                                        {data.messageType == "text" ? <h4 className='px-2'>{data.content}</h4> : data.messageType == "image" ? <img src={server_port + "/" + data.content} className='rounded-3xl' /> : data.messageType == "video" ? <video src={server_port + data.content} controls className='rounded-3xl' ></video> : data.messageType == "audio" ? <audio src={server_port + data.content} controls /> : data.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data.content}</a> : data.messageType == "reply" ?
                                             <div>
                                                 <div className={`flex items-center gap-2 p-1 rounded-2xl ${data?.sender._id === sender ? "justify-end" : "justify-start"}`}>
                                                     <img src={server_port + "/" + data?.replyTo?.senderImg} className={`rounded-full w-5 h-5`} />

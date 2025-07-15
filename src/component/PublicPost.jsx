@@ -46,7 +46,7 @@ const PublicPost = () => {
 
 
     const addNoti = (commentId_, commentText) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/addNoti/add", { receiverId: post_info.postOwner, senderId: localStorage.getItem("myId"), type: "comment", commentId: commentId_, text: commentText, postId: null })
+        axios.post(server_port + "/api/addNoti/add", { receiverId: post_info.postOwner, senderId: localStorage.getItem("myId"), type: "comment", commentId: commentId_, text: commentText, postId: null })
         socket.emit("__load_data__");
     }
 
@@ -59,9 +59,9 @@ const PublicPost = () => {
         get_my_friends();
         try {
             const getPublicPost = async () => {
-                const res = await axios.get("https://node-v1-tc13.onrender.com/api/post/publicpost/" + Myid, { withCredentials: true });
+                const res = await axios.get(server_port + "/api/post/publicpost/" + Myid, { withCredentials: true });
                 setPost(res.data.posts);
-                const _res_ = await axios.get("https://node-v1-tc13.onrender.com/api/people/userStyle", { withCredentials: true })
+                const _res_ = await axios.get(server_port + "/api/people/userStyle", { withCredentials: true })
                 setPostBG(_res_.data.data.styles.postbg);
             }
             getPublicPost();
@@ -73,7 +73,7 @@ const PublicPost = () => {
     const getPostInfo = async (id) => {
         console.log("working....!")
         try {
-            const res = await axios.get(`https://node-v1-tc13.onrender.com/api/post/postinfo/${id}`);
+            const res = await axios.get(server_port +`/api/post/postinfo/${id}`);
             setPost_info(res.data.singlePost);
             setCommentReplay(res.data.singlePost.comments)
         } catch (err) {
@@ -91,12 +91,12 @@ const PublicPost = () => {
     }, [post_id])
 
     const doLike = (postId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/addlike", { postId }, { withCredentials: true })
+        axios.post(server_port + "/api/post/addlike", { postId }, { withCredentials: true })
     }
 
     const addComment = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addcomment", { comment: commentOrReplay, post_id }, { withCredentials: true });
+            axios.post(server_port + "/api/post/addcomment", { comment: commentOrReplay, post_id }, { withCredentials: true });
             setCommentOrReplay("")
             notify("comment added ☺");
             addNoti(post_id, commentOrReplay);
@@ -105,7 +105,7 @@ const PublicPost = () => {
 
     const doReplay = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addreplay", { replyText: commentOrReplay, postId: post_id, commentId }, { withCredentials: true });
+            axios.post(server_port + "/api/post/addreplay", { replyText: commentOrReplay, postId: post_id, commentId }, { withCredentials: true });
             addNoti(post_id, commentOrReplay);
         }
         setCommentOrReplay("")
@@ -114,7 +114,7 @@ const PublicPost = () => {
 
     const doInnerRplay = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addinnerreplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId }, { withCredentials: true })
+            axios.post(server_port + "/api/post/addinnerreplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId }, { withCredentials: true })
         }
         setCommentOrReplay("")
         notify("replay added ☺")
@@ -124,7 +124,7 @@ const PublicPost = () => {
 
     const doNestedInnerReplay = () => {
         if (commentOrReplay.trim()) {
-            axios.post("https://node-v1-tc13.onrender.com/api/post/addNestedInnerReplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId, replayOf, nestedId }, { withCredentials: true })
+            axios.post(server_port + "/api/post/addNestedInnerReplay", { replyText: commentOrReplay, postId: post_id, commentId, repId: innerReplayId, replayOf, nestedId }, { withCredentials: true })
         }
         setCommentOrReplay("")
         notify("replay added ☺")
@@ -133,16 +133,16 @@ const PublicPost = () => {
     }
 
     const addLike_comment = () => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/addlike_comment", { postId: post_id, commentId }, { withCredentials: true });
+        axios.post(server_port + "/api/post/addlike_comment", { postId: post_id, commentId }, { withCredentials: true });
     }
 
     const addlike_replay = (repId, commentId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/addlike_replay", { postId: post_id, commentId, repId }, { withCredentials: true });
+        axios.post(server_port + "/api/post/addlike_replay", { postId: post_id, commentId, repId }, { withCredentials: true });
         console.log("commentId", commentId, "repId", repId, "postId", post_id)
     }
 
     const inner_addlike_replay = (repId, commentId, nestId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/post/inner_addlike_replay", { postId: post_id, commentId, repId, nestId }, { withCredentials: true });
+        axios.post(server_port + "/api/post/inner_addlike_replay", { postId: post_id, commentId, repId, nestId }, { withCredentials: true });
     }
 
     const inputRef = useRef();
@@ -152,13 +152,13 @@ const PublicPost = () => {
 
 
     const remove_post = (postId) => {
-        axios.post("https://node-v1-tc13.onrender.com/api/people/remove_post", { postId }, { withCredentials: true });
+        axios.post(server_port + "/api/people/remove_post", { postId }, { withCredentials: true });
         setLoad(load + 1);
     };
 
     const save = (id) => {
         const _id_ = localStorage.getItem("myId");
-        axios.post("https://node-v1-tc13.onrender.com/api/save/save", { id, _id_ });
+        axios.post(server_port + "/api/save/save", { id, _id_ });
     }
 
     const [isSave, setIsSave] = useState(false);

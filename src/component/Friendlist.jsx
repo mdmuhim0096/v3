@@ -34,7 +34,7 @@ const Friendlist = () => {
             {friends.map((data, index) => (
                 <div className='flex justify-between items-center w-full sm:w-6/12 mx-auto rounded-md my-4 p-2 bg-indigo-950' key={index}>
                     <Link to={"/publicprofile"} state={{ id: data._id }} className='flex justify-around items-center gap-5'>
-                        <img className='w-12 h-12  md:w-20 md:h-20 rounded-full' src={server_port + data.image} />
+                        <img className='w-12 h-12  md:w-20 md:h-20 rounded-full' src={server_port + "/" + data.image} />
                         <h4>{data.name}</h4>
                     </Link>
 

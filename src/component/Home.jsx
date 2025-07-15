@@ -9,7 +9,7 @@ import { ArrowUp, ArrowDown, ClipboardList, LayoutDashboard, LogOut, CalendarPlu
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { active } from "../utils/utils"
-
+import { v4 as uuidv4 } from 'uuid';
 const LazyComponent = lazy(() => import("./PublicPost"));
 
 let postLength = 0;
@@ -23,7 +23,7 @@ const Home = () => {
         socket.emit("__load_data__");
         const getdata = async () => {
             try {
-                const res = await axios.get("https://node-v1-tc13.onrender.com/api/people/userData", { withCredentials: true });
+                const res = await axios.get(server_port + "/api/people/userData", { withCredentials: true });
                 const data = res.data.data;
                 socket.emit("register", data._id);
                 localStorage.setItem("myId", data._id);
@@ -64,7 +64,7 @@ const Home = () => {
     }, []);
 
     const handleBeforeUnload = () => {
-        const url = "https://node-v1-tc13.onrender.com/api/people/dactiveuser";
+        const url = server_port + "/api/people/dactiveuser";
         const data = JSON.stringify({ userId });
         const blob = new Blob([data], { type: 'application/json' });
         navigator.sendBeacon(url, blob);
@@ -103,7 +103,7 @@ const Home = () => {
                 <ul className={`w-full sm:w-5/12 p-2 h-[89vh] overflow-y-auto z-50 ${isBar ? "block fixed backdrop-blur-md" : "hidden"} sm:block`}>
                     <X className='float-right cursor-pointer mb-5 sm:hidden' onClick={() => { setIsBar(false) }} />
                     <li className='py-0 justify-start gap-3 mb-7' onClick={() => { navigate("/profile") }}>
-                        <img className='w-12 h-12 rounded-full border' src={server_port + profileImage} />
+                        <img className='w-12 h-12 rounded-full border' src={server_port + "/" + profileImage} />
                         <h4>{progileName}</h4>
                     </li>
 
