@@ -26,6 +26,7 @@ import Share from "./component/Share";
 import Removemember from "./component/Removemember";
 import GroupcallAudio from "./component/GroupcallAudio";
 import GroupcallVideo from "./component/GroupcallVideo";
+import { server_port } from "./component/api";
 const App = () => {
   const [styleSheet, setStyleSheet] = useState("");
 
@@ -33,7 +34,7 @@ const App = () => {
     socket.emit("__load_data__");
     try {
       const mydata = async () => {
-        const res = await axios.get("http://localhost:4000/api/people/userStyle", { withCredentials: true })
+        const res = await axios.get(server_port + "/api/people/userStyle", { withCredentials: true })
         const data = res.data?.data?.styles;
         setStyleSheet(data)
       }
@@ -70,7 +71,7 @@ const App = () => {
           <Route path="/removeuser" element={<Removemember />} />
           <Route path="/groupcallaudio" element={<GroupcallAudio />} />
           <Route path="/groupcallvideo" element={<GroupcallVideo />} />
-          
+
           <Route path="/*" element={<div className="text-white">Coming Soon!</div>} />
         </Routes>
       </BrowserRouter>

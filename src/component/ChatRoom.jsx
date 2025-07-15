@@ -42,9 +42,9 @@ const ChatRoom = () => {
 
     const myData_ = async () => {
         const res = await axios.get(server_port + "/api/people/userData", { withCredentials: true });
-        localStorage.setItem("myId", res.data.data._id);
-        localStorage.setItem("myImage", res.data.data.image);
-        localStorage.setItem("myName", res.data.data.name);
+        localStorage.setItem("myId", res?.data?.data?._id);
+        localStorage.setItem("myImage", res?.data?.data?.image);
+        localStorage.setItem("myName", res?.data?.data?.name);
     }
 
     useEffect(() => {
@@ -64,7 +64,7 @@ const ChatRoom = () => {
     const get_my_friends = async () => {
         try {
             const res = await axios.get(myfriends_api, { withCredentials: true });
-            setFriends(res.data.data);
+            setFriends(res?.data?.data);
         } catch (error) {
             console.log(error);
         }
@@ -73,7 +73,7 @@ const ChatRoom = () => {
     const get_my_groups = async () => {
         try {
             const res = await axios.get(server_port + "/api/group/myGroup/" + localStorage.getItem("myId"));
-            setGroups(res.data.groups.groups)
+            setGroups(res?.data?.groups?.groups)
         } catch (error) {
             console.log(error);
         }
@@ -88,10 +88,10 @@ const ChatRoom = () => {
     useEffect(() => {
         const handleIncomingCall = (data) => {
             if (data.friendId === localStorage.getItem("myId")) {
-                localStorage.setItem("collerName", data.myName)
-                localStorage.setItem("collerImage", data.myImage)
+                localStorage.setItem("collerName", data?.myName)
+                localStorage.setItem("collerImage", data?.myImage)
                 document.getElementById("calltone")?.play();
-                localStorage.setItem("uniqueId", data.uniqueId)
+                localStorage.setItem("uniqueId", data?.uniqueId)
                 navigate("/videocall");
             }
         };
@@ -104,7 +104,7 @@ const ChatRoom = () => {
     useEffect(() => {
         const handleIncomingCall = (data) => {
             if (data.userId === localStorage.getItem("myId")) {
-                localStorage.setItem("callId__", data.callId);
+                localStorage.setItem("callId__", data?.callId);
                 navigate("/videocall");
             }
         };
@@ -118,7 +118,7 @@ const ChatRoom = () => {
     const get_chats = async (riciver, sender) => {
         await axios.post(server_port + "/api/people/getChat", { riciver, sender })
             .then(res => {
-                setChat(res.data.data);
+                setChat(res?.data?.data);
             })
     }
 
@@ -133,7 +133,7 @@ const ChatRoom = () => {
             get_my_friends();
             const notifications = document.getElementById("notifications");
             if (notifications) {
-                notifications.play();
+                notifications?.play();
             }
             setTimeout(() => {
                 try {
@@ -159,7 +159,7 @@ const ChatRoom = () => {
             getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"))
             const replay = document.getElementById("replay");
             if (replay) {
-                replay.play();
+                replay?.play();
             }
             setLoad(e);
             setLoad(e);
@@ -210,7 +210,7 @@ const ChatRoom = () => {
 
         try {
             const res = await axios.get(server_port + `/api/friend/ourstyle/${myId}/${_userId_}`);
-            setOurDesign(res.data.design)
+            setOurDesign(res?.data?.design)
         } catch (err) {
             console.log(err);
         }
@@ -366,8 +366,8 @@ const ChatRoom = () => {
     const safarateUser = async (id) => {
         const res = await axios.get(server_port + "/api/people/friendData/" + id);
         setSafarateUser(res.data.user);
-        localStorage.setItem("userImage", res.data.user.image)
-        localStorage.setItem("userName", res.data.user.name)
+        localStorage.setItem("userImage", res?.data?.user?.image)
+        localStorage.setItem("userName", res?.data?.user?.name)
     }
 
     const hiddenReplayPlate = (index) => {
@@ -420,6 +420,7 @@ const ChatRoom = () => {
         axios.post(server_port + "/api/gchat/createmedia", fd);
         setMedia(undefined);
         setFileUrl(null);
+
         setTimeout(() => {
             get_group_chats(localStorage.getItem("groupId"));
             socket.emit("__load_data__");
@@ -435,6 +436,7 @@ const ChatRoom = () => {
             uploadmediaInGroup(group, media);
             return;
         }
+
         const dateTime = getTime();
         const realTime = dateTime.date + " " + dateTime.actual_time;
         axios.post(server_port + "/api/gchat/createtext", { group, messageType: "text", sender: localStorage.getItem("myId"), content: message, realTime });
@@ -532,7 +534,7 @@ const ChatRoom = () => {
 
         }
         await axios.post(url, formData).then(res => {
-            const mediaUrl = res.data?.mediaUrl;
+            const mediaUrl = res?.data?.mediaUrl;
             socket.emit("__load_data__");
             setLoad(load + 3)
             try {
@@ -575,7 +577,7 @@ const ChatRoom = () => {
     async function changeGroupImage() {
         const fd = new FormData();
         fd.append("img", groupImage)
-        await axios.post(server_port + "/api/group/changeImage/" + localStorage.getItem("groupId"), fd).then(res => localStorage.setItem("userImage", res.data.img))
+        await axios.post(server_port + "/api/group/changeImage/" + localStorage.getItem("groupId"), fd).then(res => localStorage.setItem("userImage", res?.data?.img))
         setGroupImage(null)
         setLoad(load + 2)
     }
@@ -612,9 +614,9 @@ const ChatRoom = () => {
             <div className={`flex flex-col sm:w-3/12  ${isBar ? '' : 'hidden'} sm:block overflow-y-auto h-screen`}>
                 <div className={`w-full h-auto text-white `} >{friends.map((data, index) => (
                     <div onClick={() => {
-                        localStorage.setItem("userId", data._id);
+                        localStorage.setItem("userId", data?._id);
                         myData_();
-                        safarateUser(data._id);
+                        safarateUser(data?._id);
                         setLoad(load + 1);
                         getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"));
                         doChangeTextColor();

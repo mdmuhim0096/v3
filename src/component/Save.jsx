@@ -143,19 +143,19 @@ const Save = () => {
             </div>
             <ToastContainer />
             {
-                saves.map((data, index) => (
+                saves?.map((data, index) => (
                     <div key={index} className='sm:w-6/12 sm:h-[550px] mx-auto w-full h-auto rounded-lg border p-2 backdrop-blur-md my-5 bg-slate-900'>
                         <div className='flex justify-between items-center border-b-2 border-cyan-700 mb-3'>
                             <div className='flex justify-between items-center gap-2'>
-                                <img className='w-10 h-10 rounded-full' src={server_port + data.postId.postOwner.image} />
+                                <img className='w-10 h-10 rounded-full' src={server_port + data?.postId?.postOwner?.image} />
                                 <h4>{data.postId.postOwner.name}</h4>
                             </div>
                             <div className='flex justify-between items-center gap-2'>
-                                <span onClick={() => { setIsSave(true); setIdForSave(data._id) }}>
+                                <span onClick={() => { setIdForSave(data?._id) }}>
                                     <Ellipsis size={48} strokeWidth={1.5} absoluteStrokeWidth />
                                 </span>
                                 <span onClick={() => {
-                                    remove_post(data._id);
+                                    remove_post(data?._id);
                                 }} className='hover:text-red-500'>
                                     <X />
                                 </span>
@@ -164,7 +164,7 @@ const Save = () => {
                         <div className='my-2'>
                             <Seemore text={data.postId.caption} range={200} />
                         </div>
-                        {data.postId.image && !data.postId.video ? <img className='rounded-md w-full max-h-96 object-fill' src={server_port + data.postId.media} /> : <video src={server_port + data.postId.media} controls loop className='object-fill w-full h-[400px]' ></video>}
+                        {data?.postId?.image && !data?.postId?.video ? <img className='rounded-md w-full max-h-96 object-fill' src={server_port + data?.postId?.media} /> : <video src={server_port + data.postId.media} controls loop className='object-fill w-full h-[400px]' ></video>}
                         <footer className='flex w-full justify-between items-end border-t h-10'>
                             <span onClick={() => {
                                 doLike(data._id)
@@ -172,12 +172,12 @@ const Save = () => {
                             }} className='post_footer w-4/12 border-e'>
                                 <ThumbsUp />
                                 <span>Like</span>
-                                <span>{data.postId.likes.length}</span>
+                                <span>{data?.postId?.likes?.length}</span>
                             </span>
                             <span className='post_footer w-4/12 border-e justify-center'
                                 onClick={() => {
                                     setIsComment(true);
-                                    setPost_id(data.postId._id);
+                                    setPost_id(data?.postId?._id);
                                 }}>
                                 <MessageSquareIcon />
                                 <span>comments</span>
@@ -204,7 +204,7 @@ const Save = () => {
                     </header>
                     <div className='w-full h-[82vh] sm:h-[75vh] overflow-y-scroll'>
                         <div className='w-full h-auto rounded-lg bg-gray-700'>
-                            {post_info.image && !post_info.video ? <img className='rounded-md w-full max-h-96 object-contain' src={server_port + post_info.media} /> : <video src={server_port + post_info.media} controls loop ></video>}
+                            {post_info?.image && !post_info?.video ? <img className='rounded-md w-full max-h-96 object-contain' src={server_port + post_info.media} /> : <video src={server_port + post_info?.media} controls loop ></video>}
                             <p className='p-2 text-teal-300'>{post_info.caption}</p>
                         </div>
                         <div className='w-full h-auto mt-2 rounded-md text-sm'>
@@ -214,22 +214,22 @@ const Save = () => {
                                     <div className='border-s border-b w-full p-2 rounded-sm'>
                                         <div className='flex justify-start items-center gap-1'>
                                             <div className='flex justify-start items-center gap-1 cursor-pointer'>
-                                                <img src={server_port + data.user.image} className='w-6 h-6 rounded-full' />
-                                                <Link to={"/publicprofile"} state={{ id: data.user._id }} className='text-sm text-ellipsis font-extrabold text-sky-600 duration-200
-                        hover:text-cyan-500'>{data.user.name}</Link>
+                                                <img src={server_port + data?.user?.image} className='w-6 h-6 rounded-full' />
+                                                <Link to={"/publicprofile"} state={{ id: data?.user?._id }} className='text-sm text-ellipsis font-extrabold text-sky-600 duration-200
+                        hover:text-cyan-500'>{data?.user?.name}</Link>
                                             </div>
                                             <span>|</span>
                                             <span className='cursor-pointer text-indigo-600 duration-200
                 hover:text-indigo-400'
                                                 onClick={() => {
-                                                    setCommentId(data._id);
+                                                    setCommentId(data?._id);
                                                     addLike_comment();
                                                 }}
-                                            >like {data.likes?.length}</span>
+                                            >like {data?.likes?.length}</span>
                                             <span>|</span>
                                             <span className='cursor-pointer text-green-500 duration-200 hover:text-green-300'
                                                 onClick={() => {
-                                                    setCommentId(data._id);
+                                                    setCommentId(data?._id);
                                                     setDoReoplay(true);
                                                     focus();
                                                 }}>replay</span>
@@ -239,18 +239,18 @@ const Save = () => {
                                                 onClick={() => { document.getElementById(`replayPlate${index}`).style.display = "block" }}>view replay</span>
 
                                         </div>
-                                        <h5 className='ml-6 mt-1'>{data.text}</h5>
+                                        <h5 className='ml-6 mt-1'>{data?.text}</h5>
                                     </div>
-                                    <div className={`ml-1 sm:ml-8 mt-0 hidden`} id={`replayPlate${index}`}>{data.replies.map((rep, index) => (
+                                    <div className={`ml-1 sm:ml-8 mt-0 hidden`} id={`replayPlate${index}`}>{data?.replies?.map((rep, index) => (
                                         <div key={index} className='my-1'>
                                             <div className='p-2 border-s border-b w-full rounded-sm'>
                                                 <div className='flex items-center gap-1'>
 
-                                                    <Link to={"/publicprofile"} state={{ id: rep.user._id }} className='flex justify-start items-center gap-1 cursor-pointer'>
-                                                        <img src={server_port + rep.user.image} className='w-6 h-6 rounded-full' />
+                                                    <Link to={"/publicprofile"} state={{ id: rep?.user?._id }} className='flex justify-start items-center gap-1 cursor-pointer'>
+                                                        <img src={server_port + rep?.user?.image} className='w-6 h-6 rounded-full' />
                                                         <h5 className='text-sm text-ellipsis font-extrabold
                                  text-pink-600 duration-200
-                            hover:text-pink-400'>{rep.user.name}</h5>
+                            hover:text-pink-400'>{rep?.user?.name}</h5>
                                                     </Link>
 
                                                     <span>|</span>
@@ -258,76 +258,76 @@ const Save = () => {
                      text-blue duration-200
                     hover:text-indigo-600'
                                                         onClick={() => {
-                                                            addlike_replay(rep._id, data._id);
+                                                            addlike_replay(rep?._id, data?._id);
                                                         }}
-                                                    >like {rep.likes?.length}</span>
+                                                    >like {rep?.likes?.length}</span>
                                                     <span>|</span>
                                                     <span className='cursor-pointer text-lime-500 
                     duration-200 hover:text-lime-300'
                                                         onClick={() => {
                                                             setInnerReplay(true);
                                                             setNestReplay(false);
-                                                            setInnerReplayId(rep._id);
-                                                            setCommentId(data._id);
+                                                            setInnerReplayId(rep?._id);
+                                                            setCommentId(data?._id);
                                                             setDoReoplay(true)
                                                             focus();
                                                         }}>replay</span>
                                                 </div>
-                                                <h5 className='ml-6 mt-1'>{rep.text}</h5>
+                                                <h5 className='ml-6 mt-1'>{rep?.text}</h5>
                                             </div>
-                                            <div>{rep.replay.map((innerRep, index) => (
+                                            <div>{rep?.replay?.map((innerRep, index) => (
                                                 <div key={index} className='border-s border-b ml-1 sm:ml-8 p-2 rounded-sm'>
                                                     <div className='flex justify-start items-center gap-1 cursor-pointer'>
-                                                        <Link to={"/publicprofile"} state={{ id: innerRep.user._id }}
+                                                        <Link to={"/publicprofile"} state={{ id: innerRep?.user?._id }}
                                                             className='flex justify-start items-center gap-1'>
-                                                            <img src={server_port + innerRep.user.image} className='w-6 h-6 rounded-full' />
+                                                            <img src={server_port + innerRep?.user?.image} className='w-6 h-6 rounded-full' />
                                                             <h5 className='text-sm text-ellipsis font-extrabold
                                                         text-pink-600 duration-200
                                                     hover:text-pink-400'
-                                                            >{innerRep.user.name}</h5>
+                                                            >{innerRep?.user?.name}</h5>
                                                         </Link>
                                                         <span>|</span>
                                                         <span className='cursor-pointer
                                                                 text-blue duration-200
                                                                 hover:text-indigo-600'
                                                             onClick={() => {
-                                                                inner_addlike_replay(rep._id, data._id, innerRep._id);
+                                                                inner_addlike_replay(rep?._id, data?._id, innerRep?._id);
                                                             }}
-                                                        >like {innerRep.likes?.length}</span>
+                                                        >like {innerRep?.likes?.length}</span>
                                                         <span>|</span>
                                                         <span className='cursor-pointer text-lime-500 
                                                                         duration-200 hover:text-lime-300'
                                                             onClick={() => {
                                                                 setInnerReplay(false);
                                                                 setNestReplay(true);
-                                                                setNestedId(innerRep._id);
-                                                                setReplayOf(innerRep.text);
-                                                                setCommentId(data._id);
-                                                                setInnerReplayId(rep._id);
+                                                                setNestedId(innerRep?._id);
+                                                                setReplayOf(innerRep?.text);
+                                                                setCommentId(data?._id);
+                                                                setInnerReplayId(rep?._id);
                                                                 setDoReoplay(true);
                                                                 focus();
                                                             }}>replay</span>
                                                     </div>
-                                                    <h5 className='ml-6 mt-1'>{innerRep.text}</h5>
-                                                    <div className=''>{innerRep.replay.map((nest, index) => (<div key={index} >
+                                                    <h5 className='ml-6 mt-1'>{innerRep?.text}</h5>
+                                                    <div className=''>{innerRep?.replay?.map((nest, index) => (<div key={index} >
                                                         <div className='ml-6 mt-1 flex justify-start items-center'>
                                                             <span className='italic text-sky-500 pr-2'>reply of</span>
-                                                            <span>[{nest.replayOf}]</span>
-                                                            <Link to={"/publicprofile"} state={{ id: nest.user._id }} className='flex items-center px-2 cursor-pointer hover:underline hover:text-sky-500'>
-                                                                <img className='w-4 h-4 rounded-full' src={server_port + nest.user.image} />
-                                                                <span className='px-1 text-xs'>{nest.user.name}</span>
+                                                            <span>[{nest?.replayOf}]</span>
+                                                            <Link to={"/publicprofile"} state={{ id: nest?.user?._id }} className='flex items-center px-2 cursor-pointer hover:underline hover:text-sky-500'>
+                                                                <img className='w-4 h-4 rounded-full' src={server_port + nest?.user?.image} />
+                                                                <span className='px-1 text-xs'>{nest?.user?.name}</span>
                                                             </Link>
-                                                            <span className='px-1 text-orange-400'>{nest.user.gender === "male" ? `his reply is:-` : `shis reply is:-`}</span>
-                                                            <span>{nest.text}</span>
+                                                            <span className='px-1 text-orange-400'>{nest?.user?.gender === "male" ? `his reply is:-` : `shis reply is:-`}</span>
+                                                            <span>{nest?.text}</span>
                                                             <span className='cursor-pointer text-lime-500 px-2
                                                                             duration-200 hover:text-lime-300'
                                                                 onClick={() => {
                                                                     setInnerReplay(false);
                                                                     setNestReplay(true);
-                                                                    setNestedId(innerRep._id);
-                                                                    setReplayOf(nest.text);
-                                                                    setCommentId(data._id);
-                                                                    setInnerReplayId(rep._id);
+                                                                    setNestedId(innerRep?._id);
+                                                                    setReplayOf(nest?.text);
+                                                                    setCommentId(data?._id);
+                                                                    setInnerReplayId(rep?._id);
                                                                     setDoReoplay(true);
                                                                     focus();
                                                                 }}>replay</span>
