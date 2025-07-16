@@ -616,7 +616,7 @@ const ChatRoom = () => {
                     <div onClick={() => {
                         localStorage.setItem("userId", data?._id);
                         myData_();
-                        safarateUser(data?._id);
+                        safarateUser(data._id);
                         setLoad(load + 1);
                         getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"));
                         doChangeTextColor();
@@ -625,7 +625,7 @@ const ChatRoom = () => {
                         setIsChatTap(true)
                     }}
                         className='w-full flex items-center gap-4 my-4 cursor-pointer p-2 hover:bg-indigo-950 hover:border-blue hover:border rounded-md' key={index}>
-                        <img className='w-12 h-12 rounded-full' src={server_port + "/" +data.image} />
+                        <img className='w-12 h-12 rounded-full' src={server_port + "/" + data.image} />
                         <div>
                             <h6 className='text-xs py-1 text-gray-600'>your friend</h6>
                             <h4 className='text-sm'>{data.name}</h4>
@@ -635,7 +635,7 @@ const ChatRoom = () => {
                 ))}
                 </div>
 
-                <div className={`${groups.length <= 0 ? "hidden": ""}`}>
+                <div className={`${groups.length <= 0 ? "hidden" : ""}`}>
                     <hr />
                     <h5>groups</h5>
                     {groups.map((data, index) => (
@@ -808,24 +808,13 @@ const ChatRoom = () => {
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
-                                {isCahtTab ? <span className='flex gap-5'>
-                                    <Link to={"/videocall"} onClick={handelCreateCall} state={{ myId: localStorage.getItem("myId"), friendId: safarateUserState._id, isDail: true }}>
-                                        <Video />
-                                    </Link>
-                                    <Link onClick={() => { handleCreateCall() }} to={"/audiocall"} state={{ isDail: true }}>
-                                        <Phone />
-                                    </Link>
-                                </span> :
-                                    <span className='flex gap-5'>
-                                        <Link className='flex' to={"/groupcallaudio"}>
-                                            <UsersRound />
-                                            <Phone className='scale-50 -ml-2 mt-1' />
-                                        </Link>
-                                        <Link className='flex'  to={"/videocall"} state={{dail: true }}>
-                                            <UsersRound />
-                                            <Video className='scale-50 -ml-2 mt-1' />
-                                        </Link>
-                                    </span>}
+                                <Link to={"/videocall"} onClick={handelCreateCall} state={{ myId: localStorage.getItem("myId"), friendId: safarateUserState._id, isDail: true }}>
+                                    <Video to={"/videocall"} state={{ isDail: true }} />
+                                </Link>
+                                <Link onClick={() => { handleCreateCall() }} to={"/audiocall"} state={{ isDail: true }}>
+                                    <Phone />
+                                </Link>
+
                                 <Settings onClick={() => {
                                     setShowSetting(true);
                                 }} />
@@ -843,7 +832,7 @@ const ChatRoom = () => {
                                         <img className={`w-7 h-7 user rounded-full absolute bottom-1 ${message.senderId === sender ? "float-right right-0" : "float-left"}`} src={server_port + "/" + message.user.image} />
                                         <div className={`mx-10 chat-bubble cursor-pointer sm:max-w-96`}>
                                             {
-                                                message.mediaUrl?.includes("image") ? (<img src={server_port + "/" +message.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message.mediaUrl?.includes("audio") ? (<audio controls className={`${!message.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
+                                                message.mediaUrl?.includes("image") ? (<img src={server_port + "/" + message.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message.mediaUrl?.includes("audio") ? (<audio controls className={`${!message.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
                                                     <source src={server_port + message.mediaUrl} type="audio/mp3" />
                                                 </audio>)
                                                     : message.mediaUrl?.includes("video") ? (<video className={!message.mediaUrl?.includes("video") ? "hidden" : ""} controls>
