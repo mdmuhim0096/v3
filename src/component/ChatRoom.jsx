@@ -103,7 +103,7 @@ const ChatRoom = () => {
         const handleIncomingCall = (data) => {
             console.log(data);
             if (data.userId === localStorage.getItem("myId")) {
-                navigate("/v", { state: { callId: data.callId + localStorage.getItem("myId") } });
+                navigate("/v", { state: { callId: data.callId} });
             };
         }
         socket.on("____incoming_call____", handleIncomingCall);
