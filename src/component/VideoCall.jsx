@@ -1,163 +1,7 @@
-// import React, { useEffect, useRef, useState } from "react";
-// import {
-//     startMedia,
-//     createCall,
-//     joinCall,
-//     hangUp,
-//     toggleMute
-// } from "../utils/videocallutils";
-// import { useLocation } from "react-router-dom";
-// import { generateRoomId } from "../utils/roomId";
-// import { callId } from "./api"
-// function VideoCall() {
-//     const { userId, ____________id, isDail } = useLocation()?.state;
-//     const [isMuted, setIsMuted] = useState(false);
-//     const [isCalling, setIsCalling] = useState(false);
-
-//     const localVideoRef = useRef(null);
-//     const remoteVideoRef = useRef(null);
-//     const localStreamRef = useRef(null)
-
-//     console.log(____________id, "id---");
-//     console.log(callId, "callId---");
-
-//     const handleCreateCall = async () => {
-//         await createCall(callId, userId, localStreamRef.current, remoteVideoRef.current);
-//         setIsCalling(true);
-//     };
-
-//     useEffect(() => {
-//         const init = async () => {
-//             const { localStream } = await startMedia(localVideoRef.current);
-//             localStreamRef.current = localStream;
-//         };
-//         init();
-//     }, []);
-
-//     useEffect(() => {
-//         setTimeout(() => {
-//             handleCreateCall();
-//         }, 1000);
-//     }, [])
-
-//     const handleJoinCall = async () => {
-//         await joinCall(____________id, localStreamRef.current, remoteVideoRef.current);
-//         setIsCalling(true);
-//     };
-
-//     const handleHangUp = async () => {
-//         await hangUp(____________id);
-//         window.location.reload();
-//     };
-
-//     const handleMute = () => {
-//         const muted = toggleMute(localVideoRef.current);
-//         setIsMuted(muted);
-//     };
-
-//     return (
-//         <div className="flex flex-col items-center p-6 gap-4">
-//             <div className="flex gap-4">
-
-//                 <button onClick={handleJoinCall} className="bg-blue-600 text-white px-4 py-1 rounded">Join</button>
-//                 <button onClick={handleHangUp} className="bg-red-600 text-white px-4 py-1 rounded">Hang Up</button>
-//                 <button onClick={handleMute} className="bg-gray-600 text-white px-4 py-1 rounded">
-//                     {isMuted ? "Unmute" : "Mute"}
-//                 </button>
-//             </div>
-//             <div className="flex gap-4 mt-4">
-//                 <video ref={localVideoRef} autoPlay muted playsInline className="w-64 h-40 rounded shadow -scale-x-125" />
-//                 <video ref={remoteVideoRef} autoPlay playsInline className="w-64 h-40 rounded shadow -scale-x-[180]" />
-//             </div>
-//         </div>
-//     );
-// }
-
-// export default VideoCall;
-
-
-// import React, { useEffect, useRef, useState } from "react";
-// import {
-//     startMedia,
-//     createCall,
-//     joinCall,
-//     hangUp,
-//     toggleMute
-// } from "../utils/videocallutils";
-// import { useLocation } from "react-router-dom";
-
-// function VideoCall() {
-//     const location = useLocation();
-//     const { userId, callId, isDail } = location?.state || {};
-//     console.log("Call ID:", callId, "User ID:", userId, "Is Dail:", isDail);
-//     const [isMuted, setIsMuted] = useState(false);
-//     const [isCalling, setIsCalling] = useState(false);
-
-//     const localVideoRef = useRef(null);
-//     const remoteVideoRef = useRef(null);
-//     const localStreamRef = useRef(null);
-
-//     useEffect(() => {
-//     const init = async () => {
-//         try {
-//             const { localStream } = await startMedia(localVideoRef.current);
-//             localStreamRef.current = localStream;
-
-//             if (isDail) {
-//                 await createCall(callId, userId, localStreamRef.current, remoteVideoRef.current);
-//                 setIsCalling(true);
-//             }
-//         } catch (error) {
-//             console.error("❌ Failed to start media:", error.message);
-//             alert("Failed to access your camera/mic. Please check permissions.");
-//         }
-//     };
-//     init();
-// }, [callId, userId, isDail]);
-
-
-//     const handleJoinCall = async () => {
-//         await joinCall(callId, localStreamRef.current, remoteVideoRef.current);
-//         setIsCalling(true);
-//     };
-
-//     const handleHangUp = async () => {
-//         await hangUp(callId);
-//         window.location.reload();
-//     };
-
-//     const handleMute = () => {
-//         const muted = toggleMute(localVideoRef.current);
-//         setIsMuted(muted);
-//     };
-
-//     return (
-//         <div className="flex flex-col items-center p-6 gap-4">
-//             <div className="flex gap-4">
-//                 {!isDail && (
-//                     <button onClick={handleJoinCall} className="bg-blue-600 text-white px-4 py-1 rounded">
-//                         Join
-//                     </button>
-//                 )}
-//                 <button onClick={handleHangUp} className="bg-red-600 text-white px-4 py-1 rounded">
-//                     Hang Up
-//                 </button>
-//                 <button onClick={handleMute} className="bg-gray-600 text-white px-4 py-1 rounded">
-//                     {isMuted ? "Unmute" : "Mute"}
-//                 </button>
-//             </div>
-//             <div className="flex gap-4 mt-4">
-//                 <video ref={localVideoRef} autoPlay muted playsInline className="w-64 h-40 rounded shadow -scale-x-125" />
-//                 <video ref={remoteVideoRef} autoPlay playsInline className="w-64 h-40 rounded shadow -scale-x-[180]" />
-//             </div>
-//         </div>
-//     );
-// }
-
-// export default VideoCall;
-
 
 import React, { useEffect, useRef, useState } from "react";
+import socket from "./socket";
+import { useNavigate } from "react-router-dom";
 import {
     startMedia,
     createCall,
@@ -168,6 +12,7 @@ import {
 import { useLocation } from "react-router-dom";
 
 function VideoCall() {
+    const navigate = useNavigate();
     const location = useLocation();
     const { userId, callId, isDail } = location?.state || {};
 
@@ -198,6 +43,19 @@ function VideoCall() {
         init();
     }, [isDail, callId, userId]);
 
+    useEffect(() => {
+        const cutCall = (data) => {
+            hangUp();
+            console.log("Call ended by:", data);
+            navigate("/chatroom");
+            window.location.reload();
+        }
+        socket.on("end_call", cutCall);
+        return () => {
+            socket.off("end_call", cutCall);
+        };
+    }, [])
+
     // Receiver: only start media on button click
     const handleJoinCall = async () => {
         try {
@@ -212,14 +70,17 @@ function VideoCall() {
         }
     };
 
-    const handleHangUp = async () => {
+    async function handleHangUp() {
         try {
+            socket.emit("end_call", callId)
             await hangUp(callId);
+            navigate("/chatroom");
             window.location.reload();
         } catch (err) {
             console.error("Hang up error:", err);
         }
     };
+
 
     const handleMute = () => {
         const muted = toggleMute(localVideoRef.current);
