@@ -9,7 +9,7 @@ import color from "./color";
 import Navbar from './Navbar';
 import ShortText from "./ShortText";
 import { Link } from "react-router-dom";
-import { callId } from "./api";
+import { __callId__ } from "./api"
 import { active } from "../utils/utils";
 import { chatbgImage } from "../utils/chatbg";
 import VoiceButton from './Vioce';
@@ -103,7 +103,7 @@ const ChatRoom = () => {
         const handleIncomingCall = (data) => {
             console.log(data);
             if (data.userId === localStorage.getItem("myId")) {
-                navigate("/v", { state: { ___________id: data.callId } });
+                navigate("/v", { state: { callId: data.callId + localStorage.getItem("myId") } });
             };
         }
         socket.on("____incoming_call____", handleIncomingCall);
@@ -802,7 +802,7 @@ const ChatRoom = () => {
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
-                                <Link to={"/v"} state={{ userId: localStorage.getItem("userId"), isDail: true }} >
+                                <Link to={"/v"} state={{ userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") }} >
                                     <Video />
                                 </Link>
                                 <Link onClick={() => { handleCreateCall() }} >

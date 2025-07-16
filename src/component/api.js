@@ -1,4 +1,4 @@
-const API = "https://node-v1-tc13.onrender.com" // https://node-v1-tc13.onrender.com/
+const API = "https://node-v1-tc13.onrender.com/" // https://node-v1-tc13.onrender.com/
 
 export const server_port = API;
 export const signup_api = API + "/api/people/signup";
@@ -21,4 +21,4 @@ export const public_post_api = API + "/api/post/publicpost";
 export const myfriends_api = API + "/api/people/myfriends";
 export const simpleInfo_api = API + "/api/people/simpleInfo";
 
-export const callId = "dedjiwqkm394849djinm9";
+export const __callId__ = "dedjiwqkm394849djinm9";
