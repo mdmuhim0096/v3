@@ -103,7 +103,7 @@ const ChatRoom = () => {
         const handleIncomingCall = (data) => {
             console.log(data);
             if (data.userId === localStorage.getItem("myId")) {
-                navigate("/v", { state: { ____________id: data.callId } });
+                navigate("/v", { state: { ___________id: data.callId } });
             };
         }
         socket.on("____incoming_call____", handleIncomingCall);
@@ -243,7 +243,7 @@ const ChatRoom = () => {
             setTimeout(() => {
                 const data = { riciver, sender, message, mediaUrl, realtime };
                 socket.emit('send_message', data);
-                get_chats(safarateUserState._id, localStorage.getItem("myId"));
+                get_chats(safarateUserState?._id, localStorage.getItem("myId"));
                 goToBottom();
             }, 100);
 
@@ -613,11 +613,11 @@ const ChatRoom = () => {
                     <div onClick={() => {
                         localStorage.setItem("userId", data?._id);
                         myData_();
-                        safarateUser(data._id);
+                        safarateUser(data?._id);
                         setLoad(load + 1);
                         getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"));
                         doChangeTextColor();
-                        get_chats(data._id, localStorage.getItem("myId"));
+                        get_chats(data?._id, localStorage.getItem("myId"));
                         setIsBar(false);
                         setIsChatTap(true)
                     }}
@@ -639,9 +639,9 @@ const ChatRoom = () => {
                         <div key={index} className='cursor-pointer' onClick={() => {
                             localStorage.setItem("userImage", data.groupImage);
                             localStorage.setItem("userName", data.name);
-                            localStorage.setItem("groupId", data._id);
+                            localStorage.setItem("groupId", data?._id);
                             setLoad(load + 1);
-                            get_group_chats(data._id);
+                            get_group_chats(data?._id);
                             setIsChatTap(false);
                             setGroupDesign(data.style);
                             localStorage.setItem("admin", data.admin);
@@ -821,7 +821,7 @@ const ChatRoom = () => {
                         <div className={isCahtTab ? "" : "hidden"}>
                             {chats.map((message, index) => (
                                 <div
-                                    key={message._id}
+                                    key={message?._id}
                                     className={`chat ${message.senderId === sender ? "chat-end" : "chat-start"}`}
                                 >
 
@@ -845,7 +845,7 @@ const ChatRoom = () => {
 
                                                             <div>
                                                                 {message?.share?.image == true ? <img src={server_port + "/" + message.share.media} className='w-full h-full rounded-xl' /> : message.share.video == true ? <video src={server_port + message.share.media} controls className='w-full h-full rounded-xl'></video> : null}
-                                                                <Link to={"/get_post_by_notification"} state={{ postId: message.share._id }}>go to comment</Link>
+                                                                <Link to={"/get_post_by_notification"} state={{ postId: message.share?._id }}>go to comment</Link>
                                                             </div>
 
                                                             : message?.isReplay === true ?
@@ -900,7 +900,7 @@ const ChatRoom = () => {
                                             <div className={`flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full ${message.senderId === sender ? "hidden" : ""}`}
                                                 onClick={() => {
                                                     setIsRplay(true);
-                                                    setRepId(message._id);
+                                                    setRepId(message?._id);
                                                     hiddenReplayPlate(index);
                                                     focus();
                                                 }}>
@@ -908,7 +908,7 @@ const ChatRoom = () => {
                                             </div>
                                             <div className='flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full'
                                                 onClick={() => {
-                                                    deleteMessage(message._id);
+                                                    deleteMessage(message?._id);
                                                     setLoad(load + 2);
                                                     hiddenReplayPlate(index);
                                                 }}>
@@ -919,7 +919,7 @@ const ChatRoom = () => {
                                                 <RemoveFormatting /> <span>remove this</span>
                                             </div>
                                             <div onClick={() => {
-                                                unsentMessage(message._id);
+                                                unsentMessage(message?._id);
                                                 hiddenReplayPlate(index);
                                             }} className={`flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full ${message.senderId === sender ? "" : "hidden"}`}>
                                                 <ShieldBan /> <span>unsent this</span>
@@ -948,17 +948,17 @@ const ChatRoom = () => {
                         <div id='gchat' className={`${isCahtTab ? "hidden" : ""} relative ${groupDesign?.background?.bgType == "color" ? `${groupDesign?.background.bgDesign}` : ""}`} >
                             <Link to={"/groupsettings"} state={{ friends }} className='w-10 h-10 flex justify-center items-center rounded-full bg-green-500 sticky top-16'><Plus /></Link>
                             {groupChats.map((data, index) => (
-                                <div key={index} id={data._id} className={`chat ${data.sender._id === sender ? "chat-end" : "chat-start"} flex flex-col`}>
+                                <div key={index} id={data?._id} className={`chat ${data.sender?._id === sender ? "chat-end" : "chat-start"} flex flex-col`}>
 
-                                    <div className={`max-w-[50%] min-w-[20%] h-auto rounded-xl ${data.sender._id === sender ? " rounded-br-none" : "rounded-bl-none"} bg-blue-300 p-1 relative`}>
-                                        {data.messageType == "reply" ? <span className={`inline-block absolute z-30 ${data.sender._id === sender ? "-left-5 -top-4 -rotate-45" : "-right-5 -top-4 rotate-45"}`}>reply</span> : null}
+                                    <div className={`max-w-[50%] min-w-[20%] h-auto rounded-xl ${data.sender?._id === sender ? " rounded-br-none" : "rounded-bl-none"} bg-blue-300 p-1 relative`}>
+                                        {data.messageType == "reply" ? <span className={`inline-block absolute z-30 ${data.sender?._id === sender ? "-left-5 -top-4 -rotate-45" : "-right-5 -top-4 rotate-45"}`}>reply</span> : null}
                                         {data.messageType == "text" ? <h4 className='px-2'>{data.content}</h4> : data.messageType == "image" ? <img src={server_port + "/" + data.content} className='rounded-3xl' /> : data.messageType == "video" ? <video src={server_port + data.content} controls className='rounded-3xl' ></video> : data.messageType == "audio" ? <audio src={server_port + data.content} controls /> : data.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data.content}</a> : data.messageType == "reply" ?
                                             <div>
-                                                <div className={`flex items-center gap-2 p-1 rounded-2xl ${data?.sender._id === sender ? "justify-end" : "justify-start"}`}>
+                                                <div className={`flex items-center gap-2 p-1 rounded-2xl ${data?.sender?._id === sender ? "justify-end" : "justify-start"}`}>
                                                     <img src={server_port + "/" + data?.replyTo?.senderImg} className={`rounded-full w-5 h-5`} />
                                                     {data?.replyTo?.mtext.includes("image") ? <img src={server_port + "/" + data?.replyTo?.mtext} className='w-5/12 rounded-xl' /> : data?.replyTo?.mtext.includes("video") ? <video src={server_port + data?.replyTo?.mtext} controls className='rounded-3xl w-5/12' ></video> : data?.replyTo?.mtext.includes("audio") ? <audio src={server_port + data?.replyTo?.mtext} controls id='groupreplyaudio' /> : <h6>{data?.replyTo?.mtext}</h6>}
                                                     <MoveRight />
-                                                    <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full ${data.sender._id === sender ? "float-right" : ""}`} />
+                                                    <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
                                                     <h4 className=''>{data.content}</h4>
                                                 </div>
                                             </div> : data.messageType == "share" ?
@@ -977,13 +977,13 @@ const ChatRoom = () => {
                                                         <h5>{data.sender.name}</h5>
                                                     </div>
                                                 </div> : ""}
-                                        <div className={`flex ${data.sender._id === sender ? "flex-row-reverse" : ""} items-center justify-start gap-3`}>
-                                            <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full ${data.sender._id === sender ? "float-right" : ""}`} />
+                                        <div className={`flex ${data.sender?._id === sender ? "flex-row-reverse" : ""} items-center justify-start gap-3`}>
+                                            <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
                                             <h5 className='italic text-xs my-2'>{data.createdAt}</h5>
                                             <Link to={"/get_post_by_notification"} state={{ postId: data?.share?._id }} className={`text-green-500 mx-5 hover:text-blue-600 underline ${data.messageType == "share" ? "" : "hidden"}`}>go to comment</Link>
                                         </div>
-                                        <Ellipsis className={`absolute top-[40%] ${data.sender._id === sender && data.messageType == "text" ? "left-[-20%]" : data.sender._id === sender && data.messageType != "text" ? "left-[-10%]" : data.messageType == "text" ? "right-[-22%]" : "right-[-10%]"}`}
-                                            onClick={() => { setIsMenu(true); setGChatId(data._id); setMesageWoner(data.sender._id); setMsgText(data.content); setMsgWonerImage(data.sender.image); }} />
+                                        <Ellipsis className={`absolute top-[40%] ${data.sender?._id === sender && data.messageType == "text" ? "left-[-20%]" : data.sender?._id === sender && data.messageType != "text" ? "left-[-10%]" : data.messageType == "text" ? "right-[-22%]" : "right-[-10%]"}`}
+                                            onClick={() => { setIsMenu(true); setGChatId(data?._id); setMesageWoner(data.sender?._id); setMsgText(data.content); setMsgWonerImage(data.sender.image); }} />
                                     </div>
                                     <div className='flex items-center justify-start my-2 '> {data.seenBy.map((seeUser, index) => (
                                         <img key={index} src={server_port + seeUser.image} className='w-4 h-4 rounded-full' />
