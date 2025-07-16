@@ -1,130 +1,225 @@
-// videoCallUtils.js
-import { getDatabase, ref, set, onValue, remove, push } from "firebase/database";
-import { initializeApp } from "firebase/app";
-import { firebaseConfig } from "./firebaseConfig";
+import socket from "../component/socket";
+import { database, ref, set, onValue, remove, push } from "../firebase";
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// let pc = null;
 
-const servers = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+// export const startMedia = async (localVideoRef) => {
+//     const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+//     localVideoRef.srcObject = localStream;
+//     return { localStream };
+// };
+
+// function createPeerConnection(callId, localStream, remoteVideoRef, role = "caller") {
+//     pc = new RTCPeerConnection({
+//         iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+//     });
+//     if(localStream)
+//     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+//     pc.ontrack = (event) => {
+//         if (remoteVideoRef) {
+//             remoteVideoRef.srcObject = event.streams[0];
+//         }
+//     };
+
+//     // 🔥 Send ICE candidates
+//     pc.onicecandidate = (event) => {
+//         if (event.candidate) {
+//             const candidateRef = ref(database, `calls/${callId}/${role === "caller" ? "callerCandidates" : "calleeCandidates"}`);
+//             push(candidateRef, event.candidate.toJSON());
+//         }
+//     };
+
+//     return { pc };
+// };
+
+// export const createCall = async (callId, userId, localStreamRef, remoteVideoRef) => {
+//     createPeerConnection(callId, localStreamRef, remoteVideoRef);
+//     socket.emit("____incoming_call____", { userId, callId });
+//     const callRef = ref(database, `calls/${callId}`);
+//     const offer = await pc.createOffer();
+//     await pc.setLocalDescription(offer);
+//     await set(callRef, {
+//         offer: {
+//             type: offer.type,
+//             sdp: offer.sdp,
+//         }
+//     });
+
+//     onValue(ref(database, `calls/${callId}/answer`), async (snapshot) => {
+//         const data = snapshot.val();
+//         if (!pc.remoteDescription && data) {
+//             const answer = new RTCSessionDescription(data);
+//             await pc.setRemoteDescription(answer);
+//         }
+//     });
+
+//     onValue(ref(database, `calls/${callId}/calleeCandidates`), (snapshot) => {
+//         snapshot.forEach(child => {
+//             const candidate = new RTCIceCandidate(child.val());
+//             if(pc)
+//             pc.addIceCandidate(candidate);
+//         });
+//     });
+// };
+
+// export const joinCall = async (callId, localStreamRef, remoteVideoRef) => {
+//     createPeerConnection(callId, localStreamRef, remoteVideoRef);
+//     const callRef = ref(database, `calls/${callId}`);
+
+//     const snapshot = await new Promise(resolve => {
+//         onValue(callRef, resolve, { onlyOnce: true });
+//     });
+
+//     const data = snapshot.val();
+//     if (!data?.offer) return;
+
+//     await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+//     const answer = await pc.createAnswer();
+//     if(answer)
+//     await pc.setLocalDescription(answer);
+
+//     await set(ref(database, `calls/${callId}/answer`), {
+//         type: answer.type,
+//         sdp: answer.sdp,
+//     });
+
+//     onValue(ref(database, `calls/${callId}/callerCandidates`), (snapshot) => {
+//         snapshot.forEach(child => {
+//             const candidate = new RTCIceCandidate(child.val());
+//             pc.addIceCandidate(candidate);
+//         });
+//     });
+// };
+
+// export const hangUp = async (callId) => {
+//     if (pc) pc.close();
+//     await remove(ref(database, `calls/${callId}`));
+// };
+
+// export const toggleMute = (localVideoRef) => {
+//     const stream = localVideoRef.srcObject;
+//     if (!stream) return;
+
+//     const audioTrack = stream.getAudioTracks()[0];
+//     audioTrack.enabled = !audioTrack.enabled;
+//     return !audioTrack.enabled;
+// };
+
+
+
+// ✅ firebase and socket already imported
+let pc = null;
+
+let existingStream = null;
+
+export const startMedia = async (localVideoRef) => {
+    try {
+        if (!existingStream) {
+            existingStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        }
+        if (localVideoRef) {
+            localVideoRef.srcObject = existingStream;
+        }
+        return { localStream: existingStream };
+    } catch (err) {
+        throw new Error("Could not start video/audio. Make sure camera and mic are available and allowed.");
+    }
 };
 
-let pc = null;
-let localStream = null;
-let remoteStream = null;
-
-/**
- * Initializes media devices
- */
-export async function startMedia(localVideo, remoteVideo) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    localStream = stream;
-    if (localVideo) localVideo.srcObject = stream;
-
-    remoteStream = new MediaStream();
-    if (remoteVideo) remoteVideo.srcObject = remoteStream;
-
-    return { localStream, remoteStream };
-  } catch (err) {
-    throw new Error("Could not get media: " + err.message);
-  }
-}
-
-/**
- * Creates peer connection and attaches tracks
- */
-export function createPeerConnection(callId, roomCreated) {
-  pc = new RTCPeerConnection(servers);
-
-  // Add local tracks
-  localStream?.getTracks().forEach(track => {
-    pc.addTrack(track, localStream);
-  });
-
-  // Listen for remote tracks
-  pc.ontrack = event => {
-    event.streams[0].getTracks().forEach(track => {
-      remoteStream?.addTrack(track);
+export const createPeerConnection = (localStream, remoteVideoRef, callId, role = "caller") => {
+    pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
     });
-  };
 
-  // Send ICE candidates
-  pc.onicecandidate = event => {
-    if (event.candidate) {
-      const candidatesRef = ref(database, `calls/${callId}/candidates/${roomCreated ? "offer" : "answer"}`);
-      push(candidatesRef, event.candidate.toJSON());
+    if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
     }
-  };
 
-  return pc;
-}
+    pc.ontrack = (event) => {
+        if (remoteVideoRef) {
+            remoteVideoRef.srcObject = event.streams[0];
+        }
+    };
 
-/**
- * Create a WebRTC offer and store it in Firebase
-*/
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            const candidatesRef = ref(database, `calls/${callId}/${role === "caller" ? "callerCandidates" : "calleeCandidates"}`);
+            push(candidatesRef, event.candidate.toJSON());
+        }
+    };
+};
 
-export async function createCall(callId, roomCreated, socket, friendId, myImage, myName, uniqueId) {
-  if (!callId) throw new Error("Call ID is missing");
+export const createCall = async (callId, userId, localStream, remoteVideoRef) => {
+    createPeerConnection(localStream, remoteVideoRef, callId, "caller");
 
-  const pc = createPeerConnection(callId, roomCreated);
+    socket.emit("____incoming_call____", { userId, callId });
 
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  await set(ref(database, `calls/${callId}/offer`), offer);
-  console.log(friendId, "friendId")
-  socket.emit("incoming_call", {friendId, myImage, myName, uniqueId});
-  onValue(ref(database, `calls/${callId}/answer`), async snapshot => {
-    const data = snapshot.val();
-    if (data && !pc.currentRemoteDescription) {
-      await pc.setRemoteDescription(new RTCSessionDescription(data));
-    }
-  });
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 
-  onValue(ref(database, `calls/${callId}/candidates/answer`), snapshot => {
-    const candidates = snapshot.val();
-    if (candidates) {
-      Object.values(candidates).forEach(async candidate => {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      });
-    }
-  });
-}
+    const callRef = ref(database, `calls/${callId}`);
+    await set(callRef, {
+        offer: {
+            type: offer.type,
+            sdp: offer.sdp,
+        }
+    });
 
-/**
- * Join an existing call using Firebase offer
- */
+    onValue(ref(database, `calls/${callId}/answer`), async (snapshot) => {
+        const data = snapshot.val();
+        if (data && !pc.currentRemoteDescription) {
+            const answer = new RTCSessionDescription(data);
+            await pc.setRemoteDescription(answer);
+        }
+    });
 
-export async function joinCall(callId) {
-  const callRef = ref(database, `calls/${callId}`);
-  onValue(callRef, async snapshot => {
+    onValue(ref(database, `calls/${callId}/calleeCandidates`), (snapshot) => {
+        snapshot.forEach(child => {
+            const candidate = new RTCIceCandidate(child.val());
+            pc.addIceCandidate(candidate);
+        });
+    });
+};
+
+export const joinCall = async (callId, localStream, remoteVideoRef) => {
+    createPeerConnection(localStream, remoteVideoRef, callId, "callee");
+
+    const callRef = ref(database, `calls/${callId}`);
+    const snapshot = await new Promise(resolve => onValue(callRef, resolve, { onlyOnce: true }));
+
     const data = snapshot.val();
     if (!data?.offer) return;
 
-    if (!pc.currentRemoteDescription) {
-      await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await set(ref(database, `calls/${callId}/answer`), answer);
+    await set(ref(database, `calls/${callId}/answer`), {
+        type: answer.type,
+        sdp: answer.sdp,
+    });
+
+    onValue(ref(database, `calls/${callId}/callerCandidates`), (snapshot) => {
+        snapshot.forEach(child => {
+            const candidate = new RTCIceCandidate(child.val());
+            pc.addIceCandidate(candidate);
+        });
+    });
+};
+
+export const hangUp = async (callId) => {
+    if (pc) {
+        pc.close();
+        pc = null;
     }
-  });
+    await remove(ref(database, `calls/${callId}`));
+};
 
-  onValue(ref(database, `calls/${callId}/candidates/offer`), snapshot => {
-    const candidates = snapshot.val();
-    if (candidates) {
-      Object.values(candidates).forEach(async candidate => {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      });
-    }
-  });
-}
-
-/**
- * Ends the call and cleans up
- */
-export async function hangUp(callId) {
-  pc?.close();
-  await remove(ref(database, `calls/${callId}`));
-}
+export const toggleMute = (localVideoRef) => {
+    const stream = localVideoRef.srcObject;
+    if (!stream) return;
+    const audioTrack = stream.getAudioTracks()[0];
+    audioTrack.enabled = !audioTrack.enabled;
+    return !audioTrack.enabled;
+};

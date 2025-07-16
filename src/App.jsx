@@ -17,16 +17,14 @@ import Save from "./component/Save";
 import ProtectedRoute from "./component/ProtectedRoute";
 import Settings from "./component/Settings";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import VideoCall from "./component/VideoCall";
 import socket from "./component/socket";
-import Audiocall from "./component/Audiocall";
 import MutualFriend from "./component/MutualFriend";
 import Groupsettings from "./component/Groupsettings";
 import Share from "./component/Share";
 import Removemember from "./component/Removemember";
-import GroupcallAudio from "./component/GroupcallAudio";
-import GroupcallVideo from "./component/GroupcallVideo";
 import { server_port } from "./component/api";
+import VideoCall from "./component/VideoCall";
+
 const App = () => {
   const [styleSheet, setStyleSheet] = useState("");
 
@@ -63,15 +61,11 @@ const App = () => {
           <Route path="/publicVideo" element={<PublicVideo />} />
           <Route path="/save" element={<Save />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/videocall" element={<VideoCall />} />
-          <Route path="/audiocall" element={<Audiocall />} />
           <Route path="/mutualfriends" element={<MutualFriend />} />
           <Route path="/groupsettings" element={<Groupsettings />} />
           <Route path="/share" element={<Share />} />
           <Route path="/removeuser" element={<Removemember />} />
-          <Route path="/groupcallaudio" element={<GroupcallAudio />} />
-          <Route path="/groupcallvideo" element={<GroupcallVideo />} />
-
+          <Route path="/v" element={<VideoCall />} />
           <Route path="/*" element={<div className="text-white">Coming Soon!</div>} />
         </Routes>
       </BrowserRouter>

@@ -1,111 +1,157 @@
+// import React, { useEffect, useRef, useState } from "react";
+// import {
+//     startMedia,
+//     createCall,
+//     joinCall,
+//     hangUp,
+//     toggleMute
+// } from "../utils/videocallutils";
+// import { useLocation } from "react-router-dom";
+// import { generateRoomId } from "../utils/roomId";
+// import { callId } from "./api"
+// function VideoCall() {
+//     const { userId, ____________id, isDail } = useLocation()?.state;
+//     const [isMuted, setIsMuted] = useState(false);
+//     const [isCalling, setIsCalling] = useState(false);
+
+//     const localVideoRef = useRef(null);
+//     const remoteVideoRef = useRef(null);
+//     const localStreamRef = useRef(null)
+
+//     console.log(____________id, "id---");
+//     console.log(callId, "callId---");
+
+//     const handleCreateCall = async () => {
+//         await createCall(callId, userId, localStreamRef.current, remoteVideoRef.current);
+//         setIsCalling(true);
+//     };
+
+//     useEffect(() => {
+//         const init = async () => {
+//             const { localStream } = await startMedia(localVideoRef.current);
+//             localStreamRef.current = localStream;
+//         };
+//         init();
+//     }, []);
+
+//     useEffect(() => {
+//         setTimeout(() => {
+//             handleCreateCall();
+//         }, 1000);
+//     }, [])
+
+//     const handleJoinCall = async () => {
+//         await joinCall(____________id, localStreamRef.current, remoteVideoRef.current);
+//         setIsCalling(true);
+//     };
+
+//     const handleHangUp = async () => {
+//         await hangUp(____________id);
+//         window.location.reload();
+//     };
+
+//     const handleMute = () => {
+//         const muted = toggleMute(localVideoRef.current);
+//         setIsMuted(muted);
+//     };
+
+//     return (
+//         <div className="flex flex-col items-center p-6 gap-4">
+//             <div className="flex gap-4">
+
+//                 <button onClick={handleJoinCall} className="bg-blue-600 text-white px-4 py-1 rounded">Join</button>
+//                 <button onClick={handleHangUp} className="bg-red-600 text-white px-4 py-1 rounded">Hang Up</button>
+//                 <button onClick={handleMute} className="bg-gray-600 text-white px-4 py-1 rounded">
+//                     {isMuted ? "Unmute" : "Mute"}
+//                 </button>
+//             </div>
+//             <div className="flex gap-4 mt-4">
+//                 <video ref={localVideoRef} autoPlay muted playsInline className="w-64 h-40 rounded shadow -scale-x-125" />
+//                 <video ref={remoteVideoRef} autoPlay playsInline className="w-64 h-40 rounded shadow -scale-x-[180]" />
+//             </div>
+//         </div>
+//     );
+// }
+
+// export default VideoCall;
+
+
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { PhoneCall, PhoneOff } from "lucide-react";
-import socket from "./socket";
-
 import {
-  startMedia, joinCall, hangUp, createPeerConnection
+    startMedia,
+    createCall,
+    joinCall,
+    hangUp,
+    toggleMute
 } from "../utils/videocallutils";
-
-import Timer from "./Timer";
+import { useLocation } from "react-router-dom";
 
 function VideoCall() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const callId = "kmdp340fko";
-  const [isDail, setIsDail] = useState(location.state?.isDail)
-  const [roomCreated, setRoomCreated] = useState(false);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const [callStarted, setCallStarted] = useState(false);
+    const location = useLocation();
+    const { userId, callId, isDail } = location?.state || {};
+    console.log("Call ID:", callId, "User ID:", userId, "Is Dail:", isDail);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
 
-  useEffect(() => {
-    startMedia(localVideoRef.current, remoteVideoRef.current)
-      .then(({ localStream, remoteStream }) => {
-        createPeerConnection(callId, roomCreated);
-      })
-      .catch(err => alert(err.message));
-  }, []);
+    const localVideoRef = useRef(null);
+    const remoteVideoRef = useRef(null);
+    const localStreamRef = useRef(null);
 
-  const getTime = () => {
-    const time = new Date();
-    const actual_time = time.toLocaleTimeString();
-    const date = time.toDateString();
-    return { actual_time, date };
-  }
+    useEffect(() => {
+    const init = async () => {
+        try {
+            const { localStream } = await startMedia(localVideoRef.current);
+            localStreamRef.current = localStream;
 
-  const handleJoinCall = () => {
-    joinCall(callId);
-    socket.emit("____recive_call____", localStorage.getItem("uniqueId_audio"))
-    setCallStarted(true);
-    document.getElementById("calltone")?.pause();
-  };
+            if (isDail) {
+                await createCall(callId, userId, localStreamRef.current, remoteVideoRef.current);
+                setIsCalling(true);
+            }
+        } catch (error) {
+            console.error("❌ Failed to start media:", error.message);
+            alert("Failed to access your camera/mic. Please check permissions.");
+        }
+    };
+    init();
+}, [callId, userId, isDail]);
 
-  const handleHangUp = () => {
-    hangUp(callId);
-    setRoomCreated(false);
-    navigate("/chatroom");
-    document.getElementById("calltone")?.pause();
-    socket.emit("callend", localStorage.getItem("uniqueId"));
-    const riciver = localStorage.getItem("userId");
-    const sender = localStorage.getItem("myId");
-    const dateTime = getTime();
-    const realtime = dateTime.date + " " + dateTime.actual_time;
-    const data = { riciver, sender, message: "", realtime, call: { type: "video", duration: localStorage.getItem("callduration") } };
-    socket.emit("send_message", data);
-    window.location.reload();
-  };
 
-  useEffect(() => {
-    socket.on("callend", (data) => {
-      if (data === localStorage.getItem("uniqueId")) {
-        hangUp(callId);
-        navigate("/chatroom");
-        document.getElementById("calltone")?.pause();
+    const handleJoinCall = async () => {
+        await joinCall(callId, localStreamRef.current, remoteVideoRef.current);
+        setIsCalling(true);
+    };
+
+    const handleHangUp = async () => {
+        await hangUp(callId);
         window.location.reload();
-      }
-    })
+    };
 
-    socket.on("____recive_call____", data => {
-      if (data === localStorage.getItem("uniqueId_audio")) {
-        setCallStarted(true)
-      } else {
-        setCallStarted(false)
-      }
-    })
+    const handleMute = () => {
+        const muted = toggleMute(localVideoRef.current);
+        setIsMuted(muted);
+    };
 
-  }, []);
-
-  return (
-    <div className="h-screen w-full  flex justify-between">
-      <div id="callcontainer" className="w-3/12 h-auto p-2 flex gap-5  flex-col justify-between">
-        <div>
-          <div className=" h-32 flex justify-between items-center">
-            <Timer isCallActive={callStarted} />
-          </div>
+    return (
+        <div className="flex flex-col items-center p-6 gap-4">
+            <div className="flex gap-4">
+                {!isDail && (
+                    <button onClick={handleJoinCall} className="bg-blue-600 text-white px-4 py-1 rounded">
+                        Join
+                    </button>
+                )}
+                <button onClick={handleHangUp} className="bg-red-600 text-white px-4 py-1 rounded">
+                    Hang Up
+                </button>
+                <button onClick={handleMute} className="bg-gray-600 text-white px-4 py-1 rounded">
+                    {isMuted ? "Unmute" : "Mute"}
+                </button>
+            </div>
+            <div className="flex gap-4 mt-4">
+                <video ref={localVideoRef} autoPlay muted playsInline className="w-64 h-40 rounded shadow -scale-x-125" />
+                <video ref={remoteVideoRef} autoPlay playsInline className="w-64 h-40 rounded shadow -scale-x-[180]" />
+            </div>
         </div>
-        <div className=" flex justify-between items-center">
-          <PhoneOff onClick={handleHangUp} className={`cursor-pointer text-red-600`} />
-          <PhoneCall
-            onClick={handleJoinCall}
-            className={`${isDail === "true" || isDail === true ? "hidden" : "block"} cursor-pointer text-green-600`}
-          />
-        </div>
-      </div>
-      <div className="w-9/12 relative">
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          className="w-40 h-48 rounded-md -scale-x-90 absolute right-0 top-2  object-fill"
-        />
-        <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full rounded-xl object-fill border" />
-      </div>
-
-    </div>
-  );
+    );
 }
 
 export default VideoCall;
-

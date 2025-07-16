@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { myfriends_api, server_port } from './api';
-import { ArrowLeft, Rocket, Reply, Ellipsis, Trash, RemoveFormatting, X, Settings, ArrowUp, FolderUp, ArrowDown, ShieldBan, Video, Phone, UserMinus, UserPlus, Plus, MoveRight, LogOut, UserRound, UsersRound } from "lucide-react";
+import { ArrowLeft, Rocket, Reply, Ellipsis, Trash, RemoveFormatting, X, Settings, ArrowUp, FolderUp, ArrowDown, ShieldBan, Video, Phone, UserMinus, UserPlus, Plus, MoveRight, LogOut } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import socket from './socket';
@@ -9,9 +9,7 @@ import color from "./color";
 import Navbar from './Navbar';
 import ShortText from "./ShortText";
 import { Link } from "react-router-dom";
-import { createCall } from '../utils/videocallutils';
 import { callId } from "./api";
-import { ___createCall___ } from "../utils/audiocallutils";
 import { active } from "../utils/utils";
 import { chatbgImage } from "../utils/chatbg";
 import VoiceButton from './Vioce';
@@ -103,12 +101,11 @@ const ChatRoom = () => {
 
     useEffect(() => {
         const handleIncomingCall = (data) => {
+            console.log(data);
             if (data.userId === localStorage.getItem("myId")) {
-                localStorage.setItem("callId__", data?.callId);
-                navigate("/videocall");
-            }
-        };
-
+                navigate("/v", { state: { ____________id: data.callId } });
+            };
+        }
         socket.on("____incoming_call____", handleIncomingCall);
         return () => {
             socket.off("____incoming_call____", handleIncomingCall);
@@ -808,10 +805,10 @@ const ChatRoom = () => {
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
-                                <Link to={"/videocall"} onClick={handelCreateCall} state={{ myId: localStorage.getItem("myId"), friendId: safarateUserState._id, isDail: true }}>
-                                    <Video to={"/videocall"} state={{ isDail: true }} />
+                                <Link to={"/v"} state={{ userId: localStorage.getItem("userId"), isDail: true }} >
+                                    <Video />
                                 </Link>
-                                <Link onClick={() => { handleCreateCall() }} to={"/audiocall"} state={{ isDail: true }}>
+                                <Link onClick={() => { handleCreateCall() }} >
                                     <Phone />
                                 </Link>
 
