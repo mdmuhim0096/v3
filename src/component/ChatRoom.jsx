@@ -302,8 +302,8 @@ const ChatRoom = () => {
         const myId = sender;
         const myfriendId = localStorage.getItem("userId");
         axios.post(server_port + "/api/friend/doMessageItalic", { isToggleForBase: isItalic === true || isItalic === "true" ? false : true, myId, myfriendId }).then(res => {
-            localStorage.setItem("______isItalic", res.data.isItalic);
-            setIsItalic(res.data.isItalic);
+            localStorage.setItem("______isItalic", res?.data?.isItalic);
+            setIsItalic(res?.data?.isItalic);
         });
         setLoad(load + 1);
     };
@@ -451,7 +451,7 @@ const ChatRoom = () => {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        axios.post(server_port + "/api/gchat/seenby", { messageId: entry.target.id, userId: localStorage.getItem("myId") });
+                        axios.post(server_port + "/api/gchat/seenby", { messageId: entry?.target?.id, userId: localStorage.getItem("myId") });
                         observer.unobserve(entry.target);
                         setTimeout(() => {
                             socket.emit("__load_data__");
@@ -580,7 +580,7 @@ const ChatRoom = () => {
     }
 
     async function changeGeroupName() {
-        await axios.post(server_port + "/api/group/changeName", { groupName: pgname, groupId: localStorage.getItem("groupId") }).then(res => localStorage.setItem("userName", res.data.name));
+        await axios.post(server_port + "/api/group/changeName", { groupName: pgname, groupId: localStorage.getItem("groupId") }).then(res => localStorage.setItem("userName", res?.data?.name));
         setGname(false);
         setLoad(load + 1);
         setPGname("")
@@ -599,7 +599,6 @@ const ChatRoom = () => {
         const groupvideoCall = (e) => {
             localStorage.setItem("groom", e);
             navigate("/groupcallvideo");
-            console.log(e)
         }
         socket.on("groupvideocall", groupvideoCall);
         return () => socket.off("groupvideocall", groupvideoCall);
@@ -609,7 +608,7 @@ const ChatRoom = () => {
         <div className='sm:flex h-screen overflow-y-auto'>
             <span className={`sm:hidden sticky top-0 ${!isBar ? "hidden" : ""}`}><Navbar /></span>
             <div className={`flex flex-col sm:w-3/12  ${isBar ? '' : 'hidden'} sm:block overflow-y-auto h-screen`}>
-                <div className={`w-full h-auto text-white `} >{friends.map((data, index) => (
+                <div className={`w-full h-auto text-white `} >{friends?.map((data, index) => (
                     <div onClick={() => {
                         localStorage.setItem("userId", data?._id);
                         myData_();
@@ -622,29 +621,29 @@ const ChatRoom = () => {
                         setIsChatTap(true)
                     }}
                         className='w-full flex items-center gap-4 my-4 cursor-pointer p-2 hover:bg-indigo-950 hover:border-blue hover:border rounded-md' key={index}>
-                        <img className='w-12 h-12 rounded-full' src={server_port + "/" + data.image} />
+                        <img className='w-12 h-12 rounded-full' src={server_port + "/" + data?.image} />
                         <div>
                             <h6 className='text-xs py-1 text-gray-600'>your friend</h6>
-                            <h4 className='text-sm'>{data.name}</h4>
+                            <h4 className='text-sm'>{data?.name}</h4>
                         </div>
-                        <div className={data.isActive ? "text-green-500" : "text-gray"}>{data.isActive ? "online" : "offline"}</div>
+                        <div className={data?.isActive ? "text-green-500" : "text-gray"}>{data?.isActive ? "online" : "offline"}</div>
                     </div>
                 ))}
                 </div>
 
-                <div className={`${groups.length <= 0 ? "hidden" : ""}`}>
+                <div className={`${groups?.length <= 0 ? "hidden" : ""}`}>
                     <hr />
                     <h5>groups</h5>
-                    {groups.map((data, index) => (
+                    {groups?.map((data, index) => (
                         <div key={index} className='cursor-pointer' onClick={() => {
-                            localStorage.setItem("userImage", data.groupImage);
-                            localStorage.setItem("userName", data.name);
+                            localStorage.setItem("userImage", data?.groupImage);
+                            localStorage.setItem("userName", data?.name);
                             localStorage.setItem("groupId", data?._id);
                             setLoad(load + 1);
                             get_group_chats(data?._id);
                             setIsChatTap(false);
-                            setGroupDesign(data.style);
-                            localStorage.setItem("admin", data.admin);
+                            setGroupDesign(data?.style);
+                            localStorage.setItem("admin", data?.admin);
                             setIsBar(false)
                         }}>
                             <div className='flex justify-start items-center '>
@@ -671,7 +670,7 @@ const ChatRoom = () => {
                         <div>
                             <span className='capitalize'>chat background color</span>
                             <hr className='my-4' />
-                            <div className={`w-full h-52 overflow-x-auto flex`}>{color.map((colors, index) => (
+                            <div className={`w-full h-52 overflow-x-auto flex`}>{color?.map((colors, index) => (
                                 <div key={index} className={`w-full h-40 my-3 mx-2 rounded-lg ${colors}`}
                                     onClick={() => { doChangeBgColor(colors, null, "color") }}
                                 >
@@ -680,14 +679,14 @@ const ChatRoom = () => {
                             ))}</div>
 
                             <div className={`w-full h-52 overflow-x-auto flex`}>
-                                {chatbgImage.map((img, index) => (
+                                {chatbgImage?.map((img, index) => (
                                     <img key={index} src={img} className='w-4/12 h-full rounded-xl' onClick={() => { doChangeBgColor(null, img, "image") }} />
                                 ))}
                             </div>
                         </div>
                         <span>font-family</span>
                         <hr className='my-1' />
-                        <div className='flex justify-start items-center gap-4 w-full flex-wrap'>{fontFamilyArray.map((family, index) => (
+                        <div className='flex justify-start items-center gap-4 w-full flex-wrap'>{fontFamilyArray?.map((family, index) => (
                             <span
                                 key={index}
                                 onClick={() => {
@@ -699,7 +698,7 @@ const ChatRoom = () => {
                         <div>
                             <span className='capitalize'>text color</span>
                             <hr className='my-4' />
-                            <div className={`w-full h-52 overflow-x-auto flex`}>{color.map((colors, index) => (
+                            <div className={`w-full h-52 overflow-x-auto flex`}>{color?.map((colors, index) => (
                                 <div key={index} className={`w-full h-40 my-3 mx-2 rounded-lg ${colors}`}
                                     onClick={() => { doChangeTextColor(colors); setShowSetting(false) }}>
                                     <div className={`w-52 h-full`}></div>
@@ -707,7 +706,7 @@ const ChatRoom = () => {
                             ))}</div>
                         </div>
                     </div>
-                    <div onClick={() => { blockUser(ourDesign.block.isBlock == true && ourDesign?.block?.blocker == localStorage.getItem("myId") ? "unblock" : "block") }} className={`${ourDesign?.block?.blocker == localStorage.getItem("myId") ? "" : ourDesign?.block?.blocker == null ? "" : "hidden"} bg-blue-500 cursor-pointer`}>
+                    <div onClick={() => { blockUser(ourDesign?.block?.isBlock == true && ourDesign?.block?.blocker == localStorage.getItem("myId") ? "unblock" : "block") }} className={`${ourDesign?.block?.blocker == localStorage.getItem("myId") ? "" : ourDesign?.block?.blocker == null ? "" : "hidden"} bg-blue-500 cursor-pointer`}>
                         {ourDesign?.block?.isBlock == true && ourDesign?.block?.blocker == localStorage.getItem("myId") ? "unblock" : "block"}
                     </div>
 
@@ -736,7 +735,7 @@ const ChatRoom = () => {
                     <div>
                         <span className='capitalize'>chat background color</span>
                         <hr className='my-4' />
-                        <div className={`w-full h-52 overflow-x-auto flex`}>{color.map((colors, index) => (
+                        <div className={`w-full h-52 overflow-x-auto flex`}>{color?.map((colors, index) => (
                             <div key={index} className={`w-full h-40 my-3 mx-2 rounded-lg ${colors}`}
                                 onClick={() => { changeBgGroup(colors, null, "color") }}
                             >
@@ -745,7 +744,7 @@ const ChatRoom = () => {
                         ))}</div>
 
                         <div className={`w-full h-52 overflow-x-auto flex`}>
-                            {chatbgImage.map((img, index) => (
+                            {chatbgImage?.map((img, index) => (
                                 <img key={index} src={img} className='w-4/12 h-full rounded-xl' onClick={() => { changeBgGroup(null, img, "image") }} />
                             ))}
                         </div>
@@ -785,8 +784,6 @@ const ChatRoom = () => {
                     </div>
                 </div>
 
-                {console.log(groups)}
-
                 <div className={`w-full h-[90vh] border border-teal-600 relative ${isBar ? 'hidden' : 'block'}`} >
 
                     <div className={`${isRecording ? "" : "hidden"}`}>
@@ -822,59 +819,59 @@ const ChatRoom = () => {
                             {chats.map((message, index) => (
                                 <div
                                     key={message?._id}
-                                    className={`chat ${message.senderId === sender ? "chat-end" : "chat-start"}`}
+                                    className={`chat ${message?.senderId === sender ? "chat-end" : "chat-start"}`}
                                 >
 
                                     <div className='relative my-4'>
-                                        <img className={`w-7 h-7 user rounded-full absolute bottom-1 ${message.senderId === sender ? "float-right right-0" : "float-left"}`} src={server_port + "/" + message.user.image} />
+                                        <img className={`w-7 h-7 user rounded-full absolute bottom-1 ${message?.senderId === sender ? "float-right right-0" : "float-left"}`} src={server_port + "/" + message?.user?.image} />
                                         <div className={`mx-10 chat-bubble cursor-pointer sm:max-w-96`}>
                                             {
-                                                message.mediaUrl?.includes("image") ? (<img src={server_port + "/" + message.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message.mediaUrl?.includes("audio") ? (<audio controls className={`${!message.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
-                                                    <source src={server_port + message.mediaUrl} type="audio/mp3" />
+                                                message?.mediaUrl?.includes("image") ? (<img src={server_port + "/" + message?.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message?.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message?.mediaUrl?.includes("audio") ? (<audio controls className={`${!message?.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
+                                                    <source src={server_port + message?.mediaUrl} type="audio/mp3" />
                                                 </audio>)
-                                                    : message.mediaUrl?.includes("video") ? (<video className={!message.mediaUrl?.includes("video") ? "hidden" : ""} controls>
-                                                        <source src={server_port + "/" + message.mediaUrl} type="video/mp4" />
-                                                    </video>) : message.mediaUrl === "unsent" ? "unsent" :
-                                                        message.link.isLink ? (<a href={message.link.link} target='_blank' className='text-blue italic underline'><ShortText text={message.link.link} dot={4} width={window.innerWidth} range={15} /></a>) : message.link.link === "unsent" ? "unsent" : message.call?.callType ? (<div>
+                                                    : message?.mediaUrl?.includes("video") ? (<video className={!message?.mediaUrl?.includes("video") ? "hidden" : ""} controls>
+                                                        <source src={server_port + "/" + message?.mediaUrl} type="video/mp4" />
+                                                    </video>) : message?.mediaUrl === "unsent" ? "unsent" :
+                                                        message?.link?.isLink ? (<a href={message?.link?.link} target='_blank' className='text-blue italic underline'><ShortText text={message?.link?.link} dot={4} width={window.innerWidth} range={15} /></a>) : message?.link?.link === "unsent" ? "unsent" : message?.call?.callType ? (<div>
                                                             <div className='flex justify-between items-center'>
-                                                                <span className='capitalize'>{message.call?.callType}</span>
-                                                                <h6>{message.call?.duration}</h6>
+                                                                <span className='capitalize'>{message?.call?.callType}</span>
+                                                                <h6>{message?.call?.duration}</h6>
                                                                 {message.call?.callType === "audio" ? <Phone className='' /> : <Video />}
                                                             </div>
                                                         </div>) : message?.mediaUrl == "share" ?
 
                                                             <div>
-                                                                {message?.share?.image == true ? <img src={server_port + "/" + message.share.media} className='w-full h-full rounded-xl' /> : message.share.video == true ? <video src={server_port + message.share.media} controls className='w-full h-full rounded-xl'></video> : null}
-                                                                <Link to={"/get_post_by_notification"} state={{ postId: message.share?._id }}>go to comment</Link>
+                                                                {message?.share?.image == true ? <img src={server_port + "/" + message?.share?.media} className='w-full h-full rounded-xl' /> : message?.share?.video == true ? <video src={server_port + message?.share?.media} controls className='w-full h-full rounded-xl'></video> : null}
+                                                                <Link to={"/get_post_by_notification"} state={{ postId: message?.share?._id }}>go to comment</Link>
                                                             </div>
 
                                                             : message?.isReplay === true ?
                                                                 <div>
-                                                                    <h4 className={`absolute text-green-400 ${message.senderId === sender ? "-top-4 -left-4 -rotate-45" : "-top-4 -right-4 rotate-45"}`}>reply</h4>
-                                                                    {message?.replay.chatId.mediaUrl == "share" ?
+                                                                    <h4 className={`absolute text-green-400 ${message?.senderId === sender ? "-top-4 -left-4 -rotate-45" : "-top-4 -right-4 rotate-45"}`}>reply</h4>
+                                                                    {message?.replay?.chatId?.mediaUrl == "share" ?
                                                                         <div>
-                                                                            {message?.replay.chatId?.share.image == true ? <img src={server_port + "/" + message?.replay.chatId?.share.media} className='w-full h-full rounded-xl' /> : <video src={server_port + message?.replay.chatId?.share.media} controls className='w-full h-full rounded-xl'></video>}
+                                                                            {message?.replay?.chatId?.share?.image == true ? <img src={server_port + "/" + message?.replay?.chatId?.share?.media} className='w-full h-full rounded-xl' /> : <video src={server_port + message?.replay.chatId?.share?.media} controls className='w-full h-full rounded-xl'></video>}
                                                                         </div> :
                                                                         <div>
                                                                             {message?.replay?.chatId?.mediaUrl?.includes("image") ?
-                                                                                <img src={server_port + "/" + message?.replay.chatId?.mediaUrl} alt="" /> : message?.replay?.chatId?.mediaUrl?.includes("video") ? <video src={server_port + message?.replay.chatId?.mediaUrl} controls></video> : message?.replay?.chatId?.mediaUrl?.includes("audio") ? <audio src={server_port + message?.replay.chatId?.mediaUrl} controls /> : message?.replay.chatId.messageTextull}
+                                                                                <img src={server_port + "/" + message?.replay?.chatId?.mediaUrl} alt="" /> : message?.replay?.chatId?.mediaUrl?.includes("video") ? <video src={server_port + message?.replay.chatId?.mediaUrl} controls></video> : message?.replay?.chatId?.mediaUrl?.includes("audio") ? <audio src={server_port + message?.replay.chatId?.mediaUrl} controls /> : message?.replay.chatId.messageTextull}
 
                                                                         </div>
                                                                     }
                                                                     <div className='flex items-center justify-between'>
-                                                                        <h4>{message.replay.chatId.messageText}</h4>
-                                                                        <span>{message.replay.text}</span>
-                                                                        {message.replay.chatId.mediaUrl == "share" ? <Link className='text-blue-300' to={"/get_post_by_notification"} state={{ postId: message?.replay.chatId?.share?._id }}>go to comment</Link> : null}
+                                                                        <h4>{message?.replay?.chatId?.messageText}</h4>
+                                                                        <span>{message?.replay?.text}</span>
+                                                                        {message?.replay?.chatId?.mediaUrl == "share" ? <Link className='text-blue-300' to={"/get_post_by_notification"} state={{ postId: message?.replay.chatId?.share?._id }}>go to comment</Link> : null}
                                                                         {console.log(chats)}
                                                                     </div>
                                                                 </div>
-                                                                : (<span className={`${ourDesign?.styles?.text?.italic ? "italic" : ""} ${ourDesign?.styles?.text?.color} ${ourDesign?.styles?.text?.family}`}>{message.messageText}</span>)
+                                                                : (<span className={`${ourDesign?.styles?.text?.italic ? "italic" : ""} ${ourDesign?.styles?.text?.color} ${ourDesign?.styles?.text?.family}`}>{message?.messageText}</span>)
                                             }
 
-                                            <i className='text-xs text-indigo-500 block'>{message.time}</i>
+                                            <i className='text-xs text-indigo-500 block'>{message?.time}</i>
                                         </div>
 
-                                        {message.senderId === sender ? (<div className='absolute left-0 top-1/3 scale-90 border p-1 rounded-full opacity-45 hover:opacity-100 hover:bg-slate-700' onClick={() => {
+                                        {message?.senderId === sender ? (<div className='absolute left-0 top-1/3 scale-90 border p-1 rounded-full opacity-45 hover:opacity-100 hover:bg-slate-700' onClick={() => {
                                             const thisMessage = document.getElementById(`message${index}`);
                                             if (thisMessage.classList.contains("hidden")) {
                                                 thisMessage.classList.remove("hidden");
@@ -891,13 +888,13 @@ const ChatRoom = () => {
                                         }}>
                                             <Ellipsis />
                                         </div>)}
-                                        <div className={`w-52 h-auto border border-gray-100 rounded-sm absolute p-2 backdrop-blur-md hidden flex-col justify-center items-start gap-3 z-50 ${message.senderId === sender ? "" : "ml-40"} top-5 rounded-xl text-sm`} id={`message${index}`}>
+                                        <div className={`w-52 h-auto border border-gray-100 rounded-sm absolute p-2 backdrop-blur-md hidden flex-col justify-center items-start gap-3 z-50 ${message?.senderId === sender ? "" : "ml-40"} top-5 rounded-xl text-sm`} id={`message${index}`}>
                                             <div className='w-full flex justify-end items-center'>
                                                 <div onClick={() => {
                                                     hiddenReplayPlate(index);
                                                 }} className="scale-75 hover:text-red-500" ><X /></div>
                                             </div>
-                                            <div className={`flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full ${message.senderId === sender ? "hidden" : ""}`}
+                                            <div className={`flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full ${message?.senderId === sender ? "hidden" : ""}`}
                                                 onClick={() => {
                                                     setIsRplay(true);
                                                     setRepId(message?._id);
@@ -921,7 +918,7 @@ const ChatRoom = () => {
                                             <div onClick={() => {
                                                 unsentMessage(message?._id);
                                                 hiddenReplayPlate(index);
-                                            }} className={`flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full ${message.senderId === sender ? "" : "hidden"}`}>
+                                            }} className={`flex items-center justify-start gap-3 cursor-pointer hover:bg-slate-500 p-[4px] rounded-md w-full ${message?.senderId === sender ? "" : "hidden"}`}>
                                                 <ShieldBan /> <span>unsent this</span>
                                             </div>
                                         </div>
@@ -945,23 +942,23 @@ const ChatRoom = () => {
                         {/*----------------------------------------------------------*/}
 
 
-                        <div id='gchat' className={`${isCahtTab ? "hidden" : ""} relative ${groupDesign?.background?.bgType == "color" ? `${groupDesign?.background.bgDesign}` : ""}`} >
+                        <div id='gchat' className={`${isCahtTab ? "hidden" : ""} relative ${groupDesign?.background?.bgType == "color" ? `${groupDesign?.background?.bgDesign}` : ""}`} >
                             <Link to={"/groupsettings"} state={{ friends }} className='w-10 h-10 flex justify-center items-center rounded-full bg-green-500 sticky top-16'><Plus /></Link>
                             {groupChats.map((data, index) => (
-                                <div key={index} id={data?._id} className={`chat ${data.sender?._id === sender ? "chat-end" : "chat-start"} flex flex-col`}>
+                                <div key={index} id={data?._id} className={`chat ${data?.sender?._id === sender ? "chat-end" : "chat-start"} flex flex-col`}>
 
                                     <div className={`max-w-[50%] min-w-[20%] h-auto rounded-xl ${data.sender?._id === sender ? " rounded-br-none" : "rounded-bl-none"} bg-blue-300 p-1 relative`}>
-                                        {data.messageType == "reply" ? <span className={`inline-block absolute z-30 ${data.sender?._id === sender ? "-left-5 -top-4 -rotate-45" : "-right-5 -top-4 rotate-45"}`}>reply</span> : null}
-                                        {data.messageType == "text" ? <h4 className='px-2'>{data.content}</h4> : data.messageType == "image" ? <img src={server_port + "/" + data.content} className='rounded-3xl' /> : data.messageType == "video" ? <video src={server_port + data.content} controls className='rounded-3xl' ></video> : data.messageType == "audio" ? <audio src={server_port + data.content} controls /> : data.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data.content}</a> : data.messageType == "reply" ?
+                                        {data?.messageType == "reply" ? <span className={`inline-block absolute z-30 ${data.sender?._id === sender ? "-left-5 -top-4 -rotate-45" : "-right-5 -top-4 rotate-45"}`}>reply</span> : null}
+                                        {data?.messageType == "text" ? <h4 className='px-2'>{data?.content}</h4> : data?.messageType == "image" ? <img src={server_port + "/" + data?.content} className='rounded-3xl' /> : data?.messageType == "video" ? <video src={server_port + data?.content} controls className='rounded-3xl' ></video> : data?.messageType == "audio" ? <audio src={server_port + data?.content} controls /> : data?.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data?.content}</a> : data?.messageType == "reply" ?
                                             <div>
                                                 <div className={`flex items-center gap-2 p-1 rounded-2xl ${data?.sender?._id === sender ? "justify-end" : "justify-start"}`}>
                                                     <img src={server_port + "/" + data?.replyTo?.senderImg} className={`rounded-full w-5 h-5`} />
                                                     {data?.replyTo?.mtext.includes("image") ? <img src={server_port + "/" + data?.replyTo?.mtext} className='w-5/12 rounded-xl' /> : data?.replyTo?.mtext.includes("video") ? <video src={server_port + data?.replyTo?.mtext} controls className='rounded-3xl w-5/12' ></video> : data?.replyTo?.mtext.includes("audio") ? <audio src={server_port + data?.replyTo?.mtext} controls id='groupreplyaudio' /> : <h6>{data?.replyTo?.mtext}</h6>}
                                                     <MoveRight />
-                                                    <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
-                                                    <h4 className=''>{data.content}</h4>
+                                                    <img src={server_port + data?.sender?.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
+                                                    <h4 className=''>{data?.content}</h4>
                                                 </div>
-                                            </div> : data.messageType == "share" ?
+                                            </div> : data?.messageType == "share" ?
                                                 <div className='relative'>
                                                     <div>
                                                         {data?.share?.media.includes("/postImage/") ?
@@ -973,20 +970,20 @@ const ChatRoom = () => {
                                                     <div className='py-2 flex items-center justify-center gap-3'>
                                                         <h4>{data.content} that share by</h4>
                                                         <MoveRight />
-                                                        <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full`} />
-                                                        <h5>{data.sender.name}</h5>
+                                                        <img src={server_port + data?.sender?.image} className={`w-5 h-5 rounded-full`} />
+                                                        <h5>{data?.sender?.name}</h5>
                                                     </div>
                                                 </div> : ""}
                                         <div className={`flex ${data.sender?._id === sender ? "flex-row-reverse" : ""} items-center justify-start gap-3`}>
-                                            <img src={server_port + data.sender.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
-                                            <h5 className='italic text-xs my-2'>{data.createdAt}</h5>
-                                            <Link to={"/get_post_by_notification"} state={{ postId: data?.share?._id }} className={`text-green-500 mx-5 hover:text-blue-600 underline ${data.messageType == "share" ? "" : "hidden"}`}>go to comment</Link>
+                                            <img src={server_port + data?.sender?.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
+                                            <h5 className='italic text-xs my-2'>{data?.createdAt}</h5>
+                                            <Link to={"/get_post_by_notification"} state={{ postId: data?.share?._id }} className={`text-green-500 mx-5 hover:text-blue-600 underline ${data?.messageType == "share" ? "" : "hidden"}`}>go to comment</Link>
                                         </div>
-                                        <Ellipsis className={`absolute top-[40%] ${data.sender?._id === sender && data.messageType == "text" ? "left-[-20%]" : data.sender?._id === sender && data.messageType != "text" ? "left-[-10%]" : data.messageType == "text" ? "right-[-22%]" : "right-[-10%]"}`}
-                                            onClick={() => { setIsMenu(true); setGChatId(data?._id); setMesageWoner(data.sender?._id); setMsgText(data.content); setMsgWonerImage(data.sender.image); }} />
+                                        <Ellipsis className={`absolute top-[40%] ${data?.sender?._id === sender && data?.messageType == "text" ? "left-[-20%]" : data?.sender?._id === sender && data?.messageType != "text" ? "left-[-10%]" : data?.messageType == "text" ? "right-[-22%]" : "right-[-10%]"}`}
+                                            onClick={() => { setIsMenu(true); setGChatId(data?._id); setMesageWoner(data?.sender?._id); setMsgText(data?.content); setMsgWonerImage(data?.sender?.image); }} />
                                     </div>
-                                    <div className='flex items-center justify-start my-2 '> {data.seenBy.map((seeUser, index) => (
-                                        <img key={index} src={server_port + seeUser.image} className='w-4 h-4 rounded-full' />
+                                    <div className='flex items-center justify-start my-2 '> {data?.seenBy?.map((seeUser, index) => (
+                                        <img key={index} src={server_port + seeUser?.image} className='w-4 h-4 rounded-full' />
                                     ))}</div>
                                 </div>
                             ))}
@@ -1010,7 +1007,7 @@ const ChatRoom = () => {
 
                         <div className='fixed bottom-14 left-1 sm:left-auto sm:bottom-16 w-44 h-10 flex justify-between items-center text-white'
                         >
-                            <div className={`cursor-pointer w-10 h-10 bg-blue-500 rounded-md ${chats.length <= 4 ? "hidden" : "flex"} justify-center items-center text-white`} onClick={() => {
+                            <div className={`cursor-pointer w-10 h-10 bg-blue-500 rounded-md ${chats?.length <= 4 ? "hidden" : "flex"} justify-center items-center text-white`} onClick={() => {
                                 const containerHeight = document.getElementById("chat_container");
                                 scrollDown ? goToBottom() :
                                     containerHeight.scrollTop = 0;
