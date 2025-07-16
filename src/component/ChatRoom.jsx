@@ -112,6 +112,19 @@ const ChatRoom = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const handleIncomingCall = (data) => {
+            console.log(data.callId)
+            if(data.userId === localStorage.getItem("myId")) {
+                navigate("/audiocall", { state: { callId: data.callId, userId: data.userId, role: "receiver" }});
+            }
+        }
+        socket.on("incoming_call_a", handleIncomingCall);
+        return () => {
+            socket.off("incoming_call_a", handleIncomingCall);
+        }
+    }, [])
+
     const get_chats = async (riciver, sender) => {
         await axios.post(server_port + "/api/people/getChat", { riciver, sender })
             .then(res => {
@@ -155,9 +168,7 @@ const ChatRoom = () => {
             get_my_friends();
             getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"))
             const replay = document.getElementById("replay");
-            if (replay) {
-                replay?.play();
-            }
+           
             setLoad(e);
             setLoad(e);
             if (isCahtTab === false) {
@@ -805,7 +816,7 @@ const ChatRoom = () => {
                                 <Link to={"/v"} state={{ userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") }} >
                                     <Video />
                                 </Link>
-                                <Link onClick={() => { handleCreateCall() }} >
+                                <Link to={"/audiocall"} state={{callId:__callId__ + localStorage.getItem("userId"), userId:localStorage.getItem("userId"), isDail: true, role: "caller"}}>
                                     <Phone />
                                 </Link>
 

@@ -24,6 +24,7 @@ import Share from "./component/Share";
 import Removemember from "./component/Removemember";
 import { server_port } from "./component/api";
 import VideoCall from "./component/VideoCall";
+import AudioCall from "./component/Audiocall";
 
 const App = () => {
   const [styleSheet, setStyleSheet] = useState("");
@@ -66,6 +67,7 @@ const App = () => {
           <Route path="/share" element={<Share />} />
           <Route path="/removeuser" element={<Removemember />} />
           <Route path="/v" element={<VideoCall />} />
+          <Route path="/audiocall" element={<AudioCall />} />
           <Route path="/*" element={<div className="text-white">Coming Soon!</div>} />
         </Routes>
       </BrowserRouter>
