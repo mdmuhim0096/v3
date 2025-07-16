@@ -7,7 +7,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ["https://v3-ydbx.onrender.com/"]
+    cors: {
+      origin: ["https://v3-ydbx.onrender.com"],
+    },
   },
-  base: "/v3/"
+  base: "/v3/",
 });
