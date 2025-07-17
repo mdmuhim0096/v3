@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import axios from "axios";
 import { respond_request_api, server_port, rejected_api } from './api';
 import Navbar from "./Navbar";
+import { generateRoomId } from '../utils/roomId';
 
 const Accepfriends = () => {
-    const [load, setLoad] = useState(false)
+    const [load, setLoad] = useState("");
     const [accepts, setAccept] = useState([]);
     useEffect(() => {
         const get_accept = async () => {
@@ -27,7 +28,7 @@ const Accepfriends = () => {
     }
 
     return (
-        <div className='text-white'>
+        <div className='text-white h-screen overflow-y-auto'>
             <Navbar />
             {accepts?.length > 0 ?
                 accepts?.map((data, index) => (
@@ -39,11 +40,11 @@ const Accepfriends = () => {
                         <div className='flex justify-around items-center gap-3 sm:gap-5'>
                             <button onClick={() => {
                                 reject(data?._id);
-                                setLoad(load ? false : true)
+                                setLoad(generateRoomId());
                             }}>reject</button>
                             <button onClick={() => {
                                 accept(data?._id, "accepted")
-                                setLoad(load ? false : true)
+                                setLoad(generateRoomId());
                             }}>accept</button>
                         </div>
                     </div>

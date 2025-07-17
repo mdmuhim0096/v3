@@ -38,7 +38,7 @@ const Timer = ({ isCallActive }) => {
 
     return (
         <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-            Call Duration: {formatTime(time)}
+            {formatTime(time)}
         </div>
     );
 };

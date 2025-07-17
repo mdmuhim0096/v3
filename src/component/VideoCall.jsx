@@ -10,6 +10,8 @@ import {
     toggleMute
 } from "../utils/videocallutils";
 import { useLocation } from "react-router-dom";
+import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
+import Timer from "./Timer";
 
 function VideoCall() {
     const navigate = useNavigate();
@@ -31,9 +33,7 @@ function VideoCall() {
                 if (isDail) {
                     const { localStream } = await startMedia(localVideoRef.current);
                     localStreamRef.current = localStream;
-
                     await createCall(callId, userId, localStreamRef.current, remoteVideoRef.current);
-                    setIsCalling(true);
                 }
             } catch (err) {
                 console.error("Caller media error:", err);
@@ -45,18 +45,31 @@ function VideoCall() {
 
     useEffect(() => {
         const cutCall = (data) => {
-            hangUp();
-            console.log("Call ended by:", data);
-            navigate("/chatroom");
-            window.location.reload();
+            if (callId === data) {
+                hangUp();
+                navigate("/chatroom");
+                window.location.reload();
+            }
         }
         socket.on("end_call", cutCall);
         return () => {
             socket.off("end_call", cutCall);
         };
+    }, []);
+
+    useEffect(() => {
+        const handleJoinCall = (data) => {
+            if (callId === data) {
+                setIsCalling(true);
+            }
+        };
+        socket.on("join_call_v", handleJoinCall);
+        return () => {
+            socket.off("join_call_v", handleJoinCall);
+        };
     }, [])
 
-    // Receiver: only start media on button click
+    // Receiver: only start media on button click //
     const handleJoinCall = async () => {
         try {
             const { localStream } = await startMedia(localVideoRef.current);
@@ -81,33 +94,38 @@ function VideoCall() {
         }
     };
 
-
     const handleMute = () => {
         const muted = toggleMute(localVideoRef.current);
         setIsMuted(muted);
     };
 
     return (
-        <div className="flex flex-col items-center p-6 gap-4 bg-black min-h-screen">
-            {mediaError && (
-                <p className="text-red-500 text-sm">{mediaError}</p>
-            )}
-            <div className="flex gap-4">
-                {!isDail && (
-                    <button onClick={handleJoinCall} className="bg-blue-600 text-white px-4 py-1 rounded">
-                        Join
-                    </button>
-                )}
-                <button onClick={handleHangUp} className="bg-red-600 text-white px-4 py-1 rounded">
-                    Hang Up
-                </button>
-                <button onClick={handleMute} className="bg-gray-600 text-white px-4 py-1 rounded">
-                    {isMuted ? "Unmute" : "Mute"}
-                </button>
-            </div>
-            <div className="flex gap-4 mt-4">
-                <video ref={localVideoRef} autoPlay muted playsInline className="w-64 h-40 rounded shadow -scale-x-125 bg-black" />
-                <video ref={remoteVideoRef} autoPlay playsInline className="w-64 h-40 rounded shadow bg-black" />
+        <div className="w-full h-screen flex justify-center items-center md:p-4">
+            <div className="relative w-full h-full overflow-hidden flex flex-col items-center">
+                <video ref={localVideoRef} autoPlay muted playsInline className="h-40 w-24 md:w-64 md:h-40 rounded shadow -scale-x-125 absolute object-fill z-20 top-0 md:left-9 left-3" />
+                <video ref={remoteVideoRef} autoPlay playsInline className="object-fill w-full h-full absolute top-0 left-0" />
+
+                <div className="absolute z-10 bottom-1">
+                    {isCalling ? <h6 className="text-center mb-6">
+                        <Timer isCallActive={isCalling} />
+                    </h6> : null}
+
+                    <div className="flex justify-center gap-6 ">
+                        {!isDail && (
+                            <span onClick={handleJoinCall} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border text-green-600">
+                                <Phone />
+                            </span>
+                        )}
+                        <span onClick={handleHangUp} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border text-red-500">
+                            <PhoneOff />
+                        </span>
+
+                        <span onClick={handleMute} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border">
+                            {isMuted ? <MicOff className="text-red-600" /> : <Mic className="text-blue-600" />}
+                        </span>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

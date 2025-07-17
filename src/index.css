@@ -357,8 +357,6 @@ body {
 /* border animation */
 
 #animate_box span {
-  width: 30%;
-  height: 50%;
   border: 3px solid lime;
   position: absolute;
   animation: spin 10s linear infinite;
@@ -507,7 +505,7 @@ body {
 }
 
 
-#Picker{
+#Picker {
   width: 500px !important;
   height: auto !important;
   position: absolute;
@@ -517,23 +515,23 @@ body {
   left: 0;
 }
 
-#Picker .epr-body{
+#Picker .epr-body {
   width: 100% !important;
 }
 
-#Picker .epr-body .epr-emoji-category-content{
-    width: 100% !important;
+#Picker .epr-body .epr-emoji-category-content {
+  width: 100% !important;
 }
 
-.epr-emoji-category{
-    display: flex;
-    flex-direction: column;
+.epr-emoji-category {
+  display: flex;
+  flex-direction: column;
 }
 
-.epr-emoji-category:hover{
+.epr-emoji-category:hover {
   padding: 0 !important;
 }
 
-#Picker aside{
+#Picker aside {
   width: 100% !important;
 }

@@ -39,7 +39,7 @@ const getAudioBlob = async (id) => {
     return result?.blob || null;
 };
 
-// ✅ Shared Component
+
 export default function VoiceButton({ onAudioReady }) {
     const mediaRecorderRef = useRef(null);
     const streamRef = useRef(null);
@@ -48,7 +48,6 @@ export default function VoiceButton({ onAudioReady }) {
     const [isRecording, setIsRecording] = useState(false);
 
     const handleMouseDown = async () => {
-             console.log("open")
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
@@ -84,7 +83,6 @@ export default function VoiceButton({ onAudioReady }) {
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            console.log("close")
         }
     };
 

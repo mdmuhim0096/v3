@@ -103,7 +103,7 @@ const ChatRoom = () => {
         const handleIncomingCall = (data) => {
             console.log(data);
             if (data.userId === localStorage.getItem("myId")) {
-                navigate("/v", { state: { callId: data.callId} });
+                navigate("/v", { state: { callId: data.callId } });
             };
         }
         socket.on("____incoming_call____", handleIncomingCall);
@@ -115,10 +115,11 @@ const ChatRoom = () => {
     useEffect(() => {
         const handleIncomingCall = (data) => {
             console.log(data.callId)
-            if(data.userId === localStorage.getItem("myId")) {
-                navigate("/audiocall", { state: { callId: data.callId, userId: data.userId, role: "receiver" }});
+            if (data.userId === localStorage.getItem("myId")) {
+                navigate("/audiocall", { state: { callId: data.callId, userId: data.userId, role: "receiver", info: data.info } });
             }
         }
+        
         socket.on("incoming_call_a", handleIncomingCall);
         return () => {
             socket.off("incoming_call_a", handleIncomingCall);
@@ -168,7 +169,7 @@ const ChatRoom = () => {
             get_my_friends();
             getOurDesign(localStorage.getItem("myId"), localStorage.getItem("userId"))
             const replay = document.getElementById("replay");
-           
+
             setLoad(e);
             setLoad(e);
             if (isCahtTab === false) {
@@ -816,7 +817,7 @@ const ChatRoom = () => {
                                 <Link to={"/v"} state={{ userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") }} >
                                     <Video />
                                 </Link>
-                                <Link to={"/audiocall"} state={{callId:__callId__ + localStorage.getItem("userId"), userId:localStorage.getItem("userId"), isDail: true, role: "caller"}}>
+                                <Link to={"/audiocall"} state={{ callId: __callId__ + localStorage.getItem("userId"), userId: localStorage.getItem("userId"), isDail: true, info: { img: localStorage.getItem("myImage"), name_: localStorage.getItem("myName") }, role: "caller" }}>
                                     <Phone />
                                 </Link>
 
@@ -1059,7 +1060,7 @@ const ChatRoom = () => {
                     <div>
 
                     </div>
-                    <div onMouseDown={() => { setRecording(true) }}>
+                    <div onMouseDown={() => { setRecording(true) }} onTouchStart={() => {setRecording(true)}} onTouchEnd={() => {setRecording(false)}}>
                         <VoiceButton onAudioReady={(e) => { vioceHandeler(e) }} />
                     </div>
                     <div>

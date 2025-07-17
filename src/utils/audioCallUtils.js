@@ -38,9 +38,9 @@ export const createPeerConnection = (localStream, remoteAudioRef, callId, role) 
   };
 };
 
-export const createCall = async (callId, userId, localStream, remoteAudioRef) => {
+export const createCall = async (callId, userId, info, localStream, remoteAudioRef) => {
   createPeerConnection(localStream, remoteAudioRef, callId, "caller");
-  socket.emit("incoming_call_a", { userId, callId });
+  socket.emit("incoming_call_a", { userId, callId, info });
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);

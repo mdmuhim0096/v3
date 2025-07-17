@@ -3,12 +3,15 @@ import React, { useEffect, useRef, useState } from "react";
 import { startMedia, createCall, joinCall, hangUp, toggleMute } from "../utils/audioCallUtils";
 import socket from "./socket"; // fixed import path
 import { useLocation, useNavigate } from "react-router-dom";
+import Animation from "./Animation";
+import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
+import Timer from "./Timer";
 
 const AudioCall = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { callId, userId, role, isDail } = location?.state || {};
-
+    const { callId, userId, role, isDail, info } = location?.state || {};
+    const [isCallStart, setIsCallStart] = useState(false);
     const localAudioRef = useRef();
     const remoteAudioRef = useRef();
     const [muted, setMuted] = useState(false);
@@ -24,7 +27,7 @@ const AudioCall = () => {
         try {
             const { localStream } = await startMedia(localAudioRef.current);
             localStreamRef.current = localStream;
-            await createCall(callId, userId, localStream, remoteAudioRef.current);
+            await createCall(callId, userId, info, localStream, remoteAudioRef.current);
         } catch (err) {
             console.error("Call creation error:", err.message);
         }
@@ -35,6 +38,8 @@ const AudioCall = () => {
             const { localStream } = await startMedia(localAudioRef.current);
             localStreamRef.current = localStream;
             await joinCall(callId, localStream, remoteAudioRef.current);
+            socket.emit("join_call_a", userId);
+            setIsCallStart(true);
         } catch (err) {
             console.error("Call join error:", err.message);
         }
@@ -42,16 +47,18 @@ const AudioCall = () => {
 
     const hangUpCall = () => {
         hangUp(callId);
-        socket.emit("end_call_a", { callId });
+        socket.emit("end_call_a", callId);
         navigate("/chatroom");
         window.location.reload();
     };
 
     useEffect(() => {
-        const endHandler = () => {
-            hangUp(callId);
-            navigate("/chatroom");
-            window.location.reload();
+        const endHandler = (callId_) => {
+            if (callId_ === callId) {
+                hangUp(callId_);
+                navigate("/chatroom");
+                window.location.reload();
+            }
         };
         socket.on("end_call_a", endHandler);
         return () => {
@@ -59,21 +66,45 @@ const AudioCall = () => {
         };
     }, []);
 
-    return (
-        <div className="p-4 border max-w-md mx-auto mt-10 bg-white rounded shadow">
-            <h2 className="text-xl font-semibold mb-3">Audio Call</h2>
-            <audio ref={localAudioRef} autoPlay muted />
-            <audio ref={remoteAudioRef} autoPlay />
+    useEffect(() => {
+        const joinHandler = (data) => {
+            if (data === localStorage.getItem("userId")) {
+                setIsCallStart(true);
+            }
+        };
+        socket.on("join_call_a", joinHandler);
+        return () => {
+            socket.off("join_call_a", joinHandler);
+        }
+    }, []);
 
-            <div className="mt-4 flex gap-4">
-                <button onClick={joinCall__} className={`bg-green-500 px-4 py-2 rounded ${isDail ? "hidden" : ""}`}>Receive</button>
-                <button
-                    onClick={() => setMuted(toggleMute(localAudioRef.current))}
-                    className="bg-yellow-500 px-4 py-2 rounded text-white"
-                >
-                    {muted ? "Unmute" : "Mute"}
-                </button>
-                <button onClick={hangUpCall} className="bg-red-500 px-4 py-2 rounded text-white">Hang Up</button>
+    return (
+        <div className="h-screen">
+            <div className="h-full flex flex-col items-center justify-center relative p-3 md:p-0 gap-2">
+                <audio ref={localAudioRef} autoPlay muted />
+                <audio ref={remoteAudioRef} autoPlay />
+                <div className="w-full h-[65%] flex items-center justify-center relative ">
+                    <Animation role={role} info={info} type={"call"} />
+                </div>
+                {isCallStart === true ?
+                    <Timer isCallActive={isCallStart} /> : null}
+                    
+                <h1 id="collername" className="capitalize font-bold text-xl md:text-2xl bg-gradient-to-tr from-blue-600 via-green-600 to-red-700 bg-clip-text text-transparent">{role === "receiver" ? info?.name_ : localStorage.getItem("userName")}</h1>
+                <div className="mt-4 flex gap-8 items-center justify-center">
+                    <span onClick={joinCall__} className={`text-green-500 ${isDail ? "hidden" : ""} hover:border cursor-pointer p-1 rounded-lg hover:border-blue-500 duration-200`}>
+                        <Phone />
+                    </span>
+                    <span
+                        onClick={() => setMuted(toggleMute(localAudioRef.current))}
+                        className=" hover:border cursor-pointer p-1 rounded-lg hover:border-blue-500 duration-200"
+                    >
+                        {muted ? <MicOff /> : <Mic />}
+                    </span>
+                    <span onClick={hangUpCall} className="text-red-500 hover:border cursor-pointer p-1 rounded-lg hover:border-blue-500 duration-200">
+                        <PhoneOff />
+                    </span>
+                </div>
+
             </div>
         </div>
     );

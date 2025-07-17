@@ -76,7 +76,7 @@ export const createCall = async (callId, userId, localStream, remoteVideoRef) =>
 
 export const joinCall = async (callId, localStream, remoteVideoRef) => {
     createPeerConnection(localStream, remoteVideoRef, callId, "callee");
-
+    socket.emit("join_call_v", callId);
     const callRef = ref(database, `calls/${callId}`);
     const snapshot = await new Promise(resolve => onValue(callRef, resolve, { onlyOnce: true }));
 
