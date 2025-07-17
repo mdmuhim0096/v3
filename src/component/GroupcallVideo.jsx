@@ -1,7 +1,12 @@
 // src/components/GroupVideoCall.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { database, ref, set, onValue, remove } from "../firebase";
-import { getLocalStream, createPeerConnection, getPeers, closeAllConnections } from "../utils/webrtcUtils";
+import {
+  getLocalStream,
+  createPeerConnection,
+  getPeers,
+  closeAllConnections,
+} from "../utils/webrtcUtils";
 import { useNavigate, useLocation } from "react-router-dom";
 import socket from "./socket";
 import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
@@ -31,11 +36,17 @@ const GroupVideoCall = () => {
 
       for (const sender in signals) {
         const signal = signals[sender];
-        const pc = getPeers()[sender] || createPeerConnection(sender, (peerId, stream) => {
-          setRemoteStreams(prev => ({ ...prev, [peerId]: stream }));
-        });
+        const pc = getPeers()[sender] ||
+          createPeerConnection(sender, (peerId, stream) => {
+            setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
+          });
 
         if (signal.type === "offer") {
+          if (pc.signalingState !== "stable") {
+            console.warn("⚠️ Skipping offer: PC not in stable state", pc.signalingState);
+            continue;
+          }
+
           console.log("📥 Received offer from", sender);
           await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
           const answer = await pc.createAnswer();
@@ -45,11 +56,17 @@ const GroupVideoCall = () => {
             sdp: answer,
           });
         } else if (signal.type === "answer") {
-          console.log("📥 Received answer from", sender);
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          if (!pc.currentRemoteDescription) {
+            console.log("📥 Received answer from", sender);
+            await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          } else {
+            console.warn("⚠️ Skipping duplicate or invalid answer from", sender);
+          }
         }
       }
     });
+
+
 
     return () => {
       closeAllConnections();
@@ -58,8 +75,7 @@ const GroupVideoCall = () => {
     };
   }, [roomId]);
 
-  // 🎬 Create and start the group call
-  async function handleStartCall() {
+  const handleStartCall = async () => {
     const stream = await getLocalStream();
     setLocalStream(stream);
     localVideoRef.current.srcObject = stream;
@@ -68,8 +84,8 @@ const GroupVideoCall = () => {
     const peerRef = ref(database, `rooms/${roomId}/${userId.current}`);
     await set(peerRef, { joined: Date.now() });
     socket.emit("join_room", roomId);
-    // 🧠 Get list of peers and offer them
-    onValue(roomRef, async snapshot => {
+
+    onValue(roomRef, async (snapshot) => {
       const users = snapshot.val();
       if (!users) return;
 
@@ -77,14 +93,14 @@ const GroupVideoCall = () => {
         if (peerKey === userId.current) continue;
         if (!getPeers()[peerKey]) {
           const pc = createPeerConnection(peerKey, (peerId, stream) => {
-            setRemoteStreams(prev => ({ ...prev, [peerId]: stream }));
+            setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
           });
 
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           await set(ref(database, `signals/${roomId}/${peerKey}/${userId.current}`), {
             type: "offer",
-            sdp: offer
+            sdp: offer,
           });
         }
       }
@@ -95,9 +111,8 @@ const GroupVideoCall = () => {
 
   useEffect(() => {
     handleStartCall();
-  }, [])
+  }, []);
 
-  // 🔕 Accept an incoming call manually
   const handleReceiveCall = async () => {
     const stream = await getLocalStream();
     setLocalStream(stream);
@@ -108,14 +123,13 @@ const GroupVideoCall = () => {
     setCallStarted(true);
   };
 
-  // 🛑 Hang up the call
   const handleHangUp = async () => {
     await remove(ref(database, `rooms/${roomId}/${userId.current}`));
     await remove(ref(database, `signals/${roomId}/${userId.current}`));
     closeAllConnections();
 
     if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+      localStream.getTracks().forEach((track) => track.stop());
     }
 
     setRemoteStreams({});
@@ -123,7 +137,6 @@ const GroupVideoCall = () => {
     navigate("/chatroom");
   };
 
-  // 🎙️ Toggle mute
   const toggleMute = () => {
     if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
@@ -138,25 +151,39 @@ const GroupVideoCall = () => {
       <h2 className="text-xl font-bold text-center">Room ID: {roomId}</h2>
 
       <div className="flex justify-center gap-4">
-        <button onClick={handleReceiveCall} disabled={callStarted} className="text-green-500 cursor-pointer">
+        <button
+          onClick={handleReceiveCall}
+          disabled={callStarted}
+          className="text-green-500 cursor-pointer"
+        >
           <Phone />
         </button>
         <button onClick={handleHangUp} className="text-red-600">
           <PhoneOff />
         </button>
-        <button onClick={toggleMute} disabled={!callStarted} className="bg-gray-700 text-white px-4 py-2 rounded shadow">
+        <button
+          onClick={toggleMute}
+          disabled={!callStarted}
+          className="bg-gray-700 text-white px-4 py-2 rounded shadow"
+        >
           {isMuted ? <Mic /> : <MicOff />}
         </button>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mt-4">
-        <video ref={localVideoRef} autoPlay playsInline muted className="rounded-xl border shadow" />
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="rounded-xl border shadow"
+        />
         {Object.entries(remoteStreams).map(([peerId, stream]) => (
           <video
             key={peerId}
             autoPlay
             playsInline
-            ref={video => video && (video.srcObject = stream)}
+            ref={(video) => video && (video.srcObject = stream)}
             className="rounded-xl border shadow"
           />
         ))}
