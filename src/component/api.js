@@ -22,3 +22,4 @@ export const myfriends_api = API + "/api/people/myfriends";
 export const simpleInfo_api = API + "/api/people/simpleInfo";
 
 export const __callId__ = "dedjiwqkm394849djinm9";
+

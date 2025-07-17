@@ -110,7 +110,6 @@ async function connectToNewPeer(roomId, localId, remoteId, onTrackCallback) {
   });
 }
 
-
 export async function listenForOffersAndAnswer(roomId, localId) {
   const offersRef = ref(database, `calls/${roomId}/offers`);
   onValue(offersRef, async (snapshot) => {

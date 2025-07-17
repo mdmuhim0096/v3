@@ -124,6 +124,25 @@ const ChatRoom = () => {
         return () => {
             socket.off("incoming_call_a", handleIncomingCall);
         }
+    }, []);
+
+    async function isMatchGroup(id){
+       const res = await axios.get(server_port + `/api/group/isMatchGroup/${id}/${localStorage.getItem("myId")}`);
+       return res.data?.isMatch;
+    }
+
+    useEffect(()=> {
+        const handelRoom = async (data) => {
+            const isMatch = await isMatchGroup(data);
+            console.log(isMatch, "isMatch");
+            if(isMatch === true || isMatch === "true") {
+                navigate("/groupvideocall", { state: { roomId: data, role: "receiver" } });
+            }
+        }
+        socket.on("join_room", handelRoom);
+        return () => {
+            socket.off("join_room", handelRoom);
+        }
     }, [])
 
     const get_chats = async (riciver, sender) => {
@@ -161,7 +180,6 @@ const ChatRoom = () => {
             socket.off('receive_message', handleReceiveMessage);
         };
     }, [load]);
-
 
     useEffect(() => {
         const __load_data__ = (e) => {
@@ -814,7 +832,7 @@ const ChatRoom = () => {
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
-                                <Link to={"/v"} state={{ userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") }} >
+                                <Link to={isCahtTab ? "/v" : "/groupvideocall"} state={isCahtTab ? { userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") } : {roomId: localStorage.getItem("groupId"), role: "coller"}} >
                                     <Video />
                                 </Link>
                                 <Link to={"/audiocall"} state={{ callId: __callId__ + localStorage.getItem("userId"), userId: localStorage.getItem("userId"), isDail: true, info: { img: localStorage.getItem("myImage"), name_: localStorage.getItem("myName") }, role: "caller" }}>

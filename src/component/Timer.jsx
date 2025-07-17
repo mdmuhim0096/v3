@@ -39,6 +39,7 @@ const Timer = ({ isCallActive }) => {
     return (
         <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
             {formatTime(time)}
+           
         </div>
     );
 };
