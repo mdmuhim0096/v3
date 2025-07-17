@@ -1,142 +1,84 @@
-// src/components/GroupVideoCall.jsx
+
+
 import React, { useEffect, useRef, useState } from "react";
-import { database, ref, set, onValue, remove } from "../firebase";
 import {
-  getLocalStream,
-  createPeerConnection,
-  getPeers,
-  closeAllConnections,
-} from "../utils/webrtcUtils";
-import { useNavigate, useLocation } from "react-router-dom";
-import socket from "./socket";
-import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
+  startGroupMedia,
+  joinGroupRoom,
+  listenForOffers,
+  manuallyAnswerOffer,
+  callPeer,
+  hangUpGroup
+} from "../utils/groupvideocall";
+import { useLocation, useNavigate } from "react-router-dom";
+import { PhoneOff, Mic, MicOff } from "lucide-react";
 
 const GroupVideoCall = () => {
-  const localVideoRef = useRef();
+  const localVideoRef = useRef(null);
   const [remoteStreams, setRemoteStreams] = useState({});
   const [isMuted, setIsMuted] = useState(false);
-  const [localStream, setLocalStream] = useState(null);
   const [callStarted, setCallStarted] = useState(false);
+  const [localStream, setLocalStream] = useState(null);
+  const [offers, setOffers] = useState({}); // Offers received from other peers
 
-  const userId = useRef(`user-${localStorage.getItem("myId")}`);
-  const navigate = useNavigate();
   const location = useLocation();
-  const { roomId, role } = location?.state || {};
+  const navigate = useNavigate();
+  const roomId = location?.state?.roomId || "defaultRoom";
+  const userId = `user-${localStorage.getItem("myId")}`;
 
   useEffect(() => {
-    if (!roomId) {
-      navigate("/chatroom");
-      return;
-    }
+    const init = async () => {
+      try {
+        const stream = await startGroupMedia(localVideoRef.current);
+        setLocalStream(stream);
+        await joinGroupRoom(roomId, userId);
 
-    const signalRef = ref(database, `signals/${roomId}/${userId.current}`);
-    onValue(signalRef, async (snapshot) => {
-      const signals = snapshot.val();
-      if (!signals) return;
+        // Automatically send offers to everyone else
+        setCallStarted(true);
 
-      for (const sender in signals) {
-        const signal = signals[sender];
-        const pc = getPeers()[sender] ||
-          createPeerConnection(sender, (peerId, stream) => {
-            setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
-          });
-
-        if (signal.type === "offer") {
-          if (pc.signalingState !== "stable") {
-            console.warn("⚠️ Skipping offer: PC not in stable state", pc.signalingState);
-            continue;
-          }
-
-          console.log("📥 Received offer from", sender);
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await set(ref(database, `signals/${roomId}/${sender}/${userId.current}`), {
-            type: "answer",
-            sdp: answer,
-          });
-        } else if (signal.type === "answer") {
-          if (!pc.currentRemoteDescription) {
-            console.log("📥 Received answer from", sender);
-            await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-          } else {
-            console.warn("⚠️ Skipping duplicate or invalid answer from", sender);
-          }
-        }
+        // Listen for offers (to be accepted manually)
+        listenForOffers(roomId, userId, (fromId, offer) => {
+          setOffers((prev) => ({ ...prev, [fromId]: offer }));
+        });
+      } catch (error) {
+        console.error("Init error:", error.message);
       }
-    });
-
-
-
-    return () => {
-      closeAllConnections();
-      remove(ref(database, `rooms/${roomId}/${userId.current}`));
-      remove(ref(database, `signals/${roomId}/${userId.current}`));
     };
-  }, [roomId]);
 
-  const handleStartCall = async () => {
-    const stream = await getLocalStream();
-    setLocalStream(stream);
-    localVideoRef.current.srcObject = stream;
-
-    const roomRef = ref(database, `rooms/${roomId}`);
-    const peerRef = ref(database, `rooms/${roomId}/${userId.current}`);
-    await set(peerRef, { joined: Date.now() });
-    socket.emit("join_room", roomId);
-
-    onValue(roomRef, async (snapshot) => {
-      const users = snapshot.val();
-      if (!users) return;
-
-      for (const peerKey of Object.keys(users)) {
-        if (peerKey === userId.current) continue;
-        if (!getPeers()[peerKey]) {
-          const pc = createPeerConnection(peerKey, (peerId, stream) => {
-            setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
-          });
-
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          await set(ref(database, `signals/${roomId}/${peerKey}/${userId.current}`), {
-            type: "offer",
-            sdp: offer,
-          });
-        }
-      }
-    });
-
-    setCallStarted(true);
-  };
-
-  useEffect(() => {
-    handleStartCall();
+    init();
   }, []);
 
-  const handleReceiveCall = async () => {
-    const stream = await getLocalStream();
-    setLocalStream(stream);
-    localVideoRef.current.srcObject = stream;
+  // 🟢 Accept an incoming offer manually
+const handleReceiveCall = async (peerId) => {
+  const offer = offers[peerId];
+  if (!offer) return;
 
-    const peerRef = ref(database, `rooms/${roomId}/${userId.current}`);
-    await set(peerRef, { joined: Date.now() });
-    setCallStarted(true);
-  };
+  await manuallyAnswerOffer(roomId, userId, peerId, offer, (peerId, stream) => {
+    setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
+  });
 
+  // Optionally clear the offer after accepted
+  setOffers((prev) => {
+    const updated = { ...prev };
+    delete updated[peerId];
+    return updated;
+  });
+};
+
+
+  // 🔴 Hang up
   const handleHangUp = async () => {
-    await remove(ref(database, `rooms/${roomId}/${userId.current}`));
-    await remove(ref(database, `signals/${roomId}/${userId.current}`));
-    closeAllConnections();
+    await hangUpGroup(roomId, userId);
 
     if (localStream) {
       localStream.getTracks().forEach((track) => track.stop());
     }
 
-    setRemoteStreams({});
     setCallStarted(false);
+    setRemoteStreams({});
     navigate("/chatroom");
   };
 
+  // 🎤 Mute/unmute mic
   const toggleMute = () => {
     if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
@@ -151,22 +93,26 @@ const GroupVideoCall = () => {
       <h2 className="text-xl font-bold text-center">Room ID: {roomId}</h2>
 
       <div className="flex justify-center gap-4">
-        <button
-          onClick={handleReceiveCall}
-          disabled={callStarted}
-          className="text-green-500 cursor-pointer"
-        >
-          <Phone />
-        </button>
-        <button onClick={handleHangUp} className="text-red-600">
+        {Object.keys(offers).map((fromId) => (
+          <button
+            key={fromId}
+            onClick={() => handleReceiveCall(fromId)}
+            className="text-green-600 px-4 py-2 bg-white shadow rounded"
+          >
+            Accept from {fromId}
+          </button>
+        ))}
+
+        <button onClick={handleHangUp} className="text-red-600 px-4 py-2 bg-white shadow rounded">
           <PhoneOff />
         </button>
+
         <button
           onClick={toggleMute}
           disabled={!callStarted}
           className="bg-gray-700 text-white px-4 py-2 rounded shadow"
         >
-          {isMuted ? <Mic /> : <MicOff />}
+          {isMuted ? <MicOff /> : <Mic />}
         </button>
       </div>
 
@@ -174,8 +120,8 @@ const GroupVideoCall = () => {
         <video
           ref={localVideoRef}
           autoPlay
-          playsInline
           muted
+          playsInline
           className="rounded-xl border shadow"
         />
         {Object.entries(remoteStreams).map(([peerId, stream]) => (
@@ -183,7 +129,9 @@ const GroupVideoCall = () => {
             key={peerId}
             autoPlay
             playsInline
-            ref={(video) => video && (video.srcObject = stream)}
+            ref={(video) => {
+              if (video) video.srcObject = stream;
+            }}
             className="rounded-xl border shadow"
           />
         ))}
