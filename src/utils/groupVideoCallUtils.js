@@ -8,6 +8,7 @@ import {
     onChildAdded,
     onChildRemoved,
     remove,
+    get
 } from "firebase/database";
 
 let localStream;
@@ -43,33 +44,87 @@ export const createCall = async (roomId, userId) => {
     };
 };
 
+// export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
+//     const offerRef = ref(database, `rooms/${roomId}/offers/${callerId}`);
+//     const snapshot = await new Promise((res) => {
+//         onChildAdded(offerRef, (snap) => res(snap));
+//     });
+
+//     const offerData = snapshot.val();
+//     const pc = new RTCPeerConnection(config);
+//     peerConnections[callerId] = pc;
+
+//     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+//     pc.ontrack = (event) => {
+//         onTrack(event.streams[0], callerId);
+//     };
+
+//     await pc.setRemoteDescription(new RTCSessionDescription(offerData));
+//     const answer = await pc.createAnswer();
+//     await pc.setLocalDescription(answer);
+
+//     const answerRef = ref(database, `rooms/${roomId}/answers/${receiverId}`);
+//     await pc.setRemoteDescription(new RTCSessionDescription({
+//         sdp: offerData.sdp,
+//         type: offerData.type
+//     }));
+
+
+//     pc.onicecandidate = (event) => {
+//         if (event.candidate) {
+//             const candidateRef = push(ref(database, `rooms/${roomId}/candidates/${receiverId}`));
+//             set(candidateRef, event.candidate.toJSON());
+//         }
+//     };
+// };
+
 export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
     const offerRef = ref(database, `rooms/${roomId}/offers/${callerId}`);
-    const snapshot = await new Promise((res) => {
-        onChildAdded(offerRef, (snap) => res(snap));
-    });
+
+    // ✅ Use `get` instead of `onChildAdded`
+    const snapshot = await get(offerRef);
+    if (!snapshot.exists()) {
+        throw new Error("❌ No offer found from caller");
+    }
 
     const offerData = snapshot.val();
+
+    // ✅ Validate offerData
+    if (!offerData?.sdp || !offerData?.type) {
+        throw new Error("❌ Invalid offer data format");
+    }
+
     const pc = new RTCPeerConnection(config);
     peerConnections[callerId] = pc;
 
+    // ✅ Add local media
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
+    // ✅ Handle incoming media
     pc.ontrack = (event) => {
         onTrack(event.streams[0], callerId);
     };
 
-    await pc.setRemoteDescription(new RTCSessionDescription(offerData));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    const answerRef = ref(database, `rooms/${roomId}/answers/${receiverId}`);
+    // ✅ Set offer from caller
     await pc.setRemoteDescription(new RTCSessionDescription({
         sdp: offerData.sdp,
         type: offerData.type
     }));
 
+    // ✅ Create and set local answer
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
 
+    // ✅ Send answer to Firebase
+    const answerRef = ref(database, `rooms/${roomId}/answers/${receiverId}`);
+    await set(answerRef, {
+        sdp: answer.sdp,
+        type: answer.type,
+        to: callerId
+    });
+
+    // ✅ Send ICE candidates
     pc.onicecandidate = (event) => {
         if (event.candidate) {
             const candidateRef = push(ref(database, `rooms/${roomId}/candidates/${receiverId}`));
