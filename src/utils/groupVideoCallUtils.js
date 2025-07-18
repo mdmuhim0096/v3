@@ -23,7 +23,7 @@ export const createCall = async (roomId, userId) => {
     const offerRef = ref(database, `rooms/${roomId}/offers/${userId}`);
     const pc = new RTCPeerConnection(config);
     peerConnections[userId] = pc;
-    socket.emit("join_room", {roomId, userId});
+    socket.emit("join_room", { roomId, userId });
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
     const offer = await pc.createOffer();
@@ -64,11 +64,11 @@ export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
     await pc.setLocalDescription(answer);
 
     const answerRef = ref(database, `rooms/${roomId}/answers/${receiverId}`);
-    await set(answerRef, {
-        sdp: answer.sdp,
-        type: answer.type,
-        to: callerId,
-    });
+    await pc.setRemoteDescription(new RTCSessionDescription({
+        sdp: offerData.sdp,
+        type: offerData.type
+    }));
+
 
     pc.onicecandidate = (event) => {
         if (event.candidate) {
