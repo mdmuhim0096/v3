@@ -25,7 +25,6 @@ export const createCall = async (roomId, userId) => {
     const offerRef = ref(database, `rooms/${roomId}/offers/${userId}`);
     const pc = new RTCPeerConnection(config);
     peerConnections[userId] = pc;
-    console.log("Creating call for room:", roomId, "user:", userId);
     socket.emit("join_room", { roomId, userId });
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
@@ -35,7 +34,7 @@ export const createCall = async (roomId, userId) => {
     await set(offerRef, {
         sdp: offer.sdp,
         type: offer.type,
-        from: userId,
+        from: userId
     });
 
     pc.onicecandidate = (event) => {
@@ -98,45 +97,55 @@ export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
     };
 };
 
-
 export const listenForAnswers = (roomId, callerId, onTrack) => {
-    const answerRef = ref(database, `rooms/${roomId}/answers`);
-    onChildAdded(answerRef, async (snapshot) => {
-        const answer = snapshot.val();
-        if (!answer || answer.to !== callerId) return;
+  const answerRef = ref(database, `rooms/${roomId}/answers`);
+  onChildAdded(answerRef, async (snapshot) => {
+    const answer = snapshot.val();
+    const receiverId = snapshot.key;
 
-        const receiverId = snapshot.key;
-        const pc = peerConnections[receiverId] || new RTCPeerConnection(config);
-        peerConnections[receiverId] = pc;
+    if (!answer || answer.to !== callerId) return;
 
-        localStream.getTracks().forEach(track => {
-            if (!pc.getSenders().some(sender => sender.track === track)) {
-                pc.addTrack(track, localStream);
-            }
-        });
+    console.log("📞 Received answer from:", receiverId);
 
-        pc.ontrack = (event) => {
-            onTrack(event.streams[0], receiverId);
-        };
+    let pc = peerConnections[callerId]; // ✅ Reuse caller's PC
 
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                const candidateRef = push(ref(database, `rooms/${roomId}/candidates/${callerId}`));
-                set(candidateRef, event.candidate.toJSON());
-            }
-        };
+    if (!pc) {
+      pc = new RTCPeerConnection(config);
+      peerConnections[callerId] = pc;
 
-        await pc.setRemoteDescription(new RTCSessionDescription({
-            sdp: answer.sdp,
-            type: answer.type
-        }));
-    });
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          const candidateRef = push(ref(database, `rooms/${roomId}/candidates/${callerId}`));
+          set(candidateRef, event.candidate.toJSON());
+        }
+      };
+    }
+
+    pc.ontrack = (event) => {
+      console.log("📹 Caller received stream from:", receiverId);
+      onTrack(event.streams[0], receiverId);
+    };
+
+    await pc.setRemoteDescription(new RTCSessionDescription({
+      sdp: answer.sdp,
+      type: answer.type
+    }));
+  });
 };
 
 export const listenForCandidates = (roomId, userId) => {
     const candidateRef = ref(database, `rooms/${roomId}/candidates`);
     onChildAdded(candidateRef, async (snapshot) => {
         const candidate = snapshot.val();
+        const to = candidate?.to;
+
+        // Skip if not meant for this user
+        if (to && to !== userId) return;
+
         const pc = peerConnections[userId];
         if (pc) {
             try {
