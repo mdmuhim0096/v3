@@ -29,7 +29,14 @@ const VideoTile = ({ stream }) => {
             ref={videoRef}
             autoPlay
             playsInline
-            style={{ width: 200, backgroundColor: "black" }}
+            style={{
+                width: "100%",
+                maxWidth: 300,
+                height: 200,
+                backgroundColor: "black",
+                borderRadius: 8,
+                objectFit: "cover",
+            }}
         />
     );
 };

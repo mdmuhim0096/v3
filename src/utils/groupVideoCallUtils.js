@@ -14,7 +14,17 @@ import {
 
 let localStream;
 const peerConnections = {};
-const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const config = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    {
+      urls: "turn:relay1.expressturn.com:3478",
+      username: "efresh",
+      credential: "webrtcdemo",
+    },
+  ],
+};
+
 
 export const startMedia = async () => {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
