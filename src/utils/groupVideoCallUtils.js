@@ -46,79 +46,42 @@ export const createCall = async (roomId, userId) => {
     };
 };
 
-// export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
-//     const offerRef = ref(database, `rooms/${roomId}/offers/${callerId}`);
-//     const snapshot = await new Promise((res) => {
-//         onChildAdded(offerRef, (snap) => res(snap));
-//     });
-
-//     const offerData = snapshot.val();
-//     const pc = new RTCPeerConnection(config);
-//     peerConnections[callerId] = pc;
-
-//     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-//     pc.ontrack = (event) => {
-//         onTrack(event.streams[0], callerId);
-//     };
-
-//     await pc.setRemoteDescription(new RTCSessionDescription(offerData));
-//     const answer = await pc.createAnswer();
-//     await pc.setLocalDescription(answer);
-
-//     const answerRef = ref(database, `rooms/${roomId}/answers/${receiverId}`);
-//     await pc.setRemoteDescription(new RTCSessionDescription({
-//         sdp: offerData.sdp,
-//         type: offerData.type
-//     }));
-
-
-//     pc.onicecandidate = (event) => {
-//         if (event.candidate) {
-//             const candidateRef = push(ref(database, `rooms/${roomId}/candidates/${receiverId}`));
-//             set(candidateRef, event.candidate.toJSON());
-//         }
-//     };
-// };
 
 export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
     const offerRef = ref(database, `rooms/${roomId}/offers/${callerId}`);
-
-    // ✅ Use `get` instead of `onChildAdded`
     const snapshot = await get(offerRef);
-    if (!snapshot.exists()) {
-        throw new Error("❌ No offer found from caller");
-    }
+
+    if (!snapshot.exists()) throw new Error("❌ No offer found");
 
     const offerData = snapshot.val();
-
-    // ✅ Validate offerData
     if (!offerData?.sdp || !offerData?.type) {
-        throw new Error("❌ Invalid offer data format");
+        throw new Error("❌ Invalid offer format");
     }
 
+    // ✅ Create peer connection
     const pc = new RTCPeerConnection(config);
     peerConnections[callerId] = pc;
 
-    // ✅ Add local media
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    // ✅ Add receiver's camera/mic to peer connection
+    localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream); // <== THIS is required
+    });
 
-    // ✅ Handle incoming media
+    // ✅ Handle remote stream (from caller)
     pc.ontrack = (event) => {
         onTrack(event.streams[0], callerId);
     };
 
-    // ✅ Set offer from caller
+    // ✅ Set remote description from caller (the offer)
     await pc.setRemoteDescription(new RTCSessionDescription({
         sdp: offerData.sdp,
         type: offerData.type
     }));
 
-    // ✅ Create and set local answer
+    // ✅ Create and send back answer
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    // ✅ Send answer to Firebase
     const answerRef = ref(database, `rooms/${roomId}/answers/${receiverId}`);
     await set(answerRef, {
         sdp: answer.sdp,
@@ -126,7 +89,7 @@ export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
         to: callerId
     });
 
-    // ✅ Send ICE candidates
+    // ✅ Send receiver's ICE candidates
     pc.onicecandidate = (event) => {
         if (event.candidate) {
             const candidateRef = push(ref(database, `rooms/${roomId}/candidates/${receiverId}`));
@@ -138,23 +101,23 @@ export const receiveCall = async (roomId, callerId, receiverId, onTrack) => {
 
 export const listenForAnswers = (roomId, callerId, onTrack) => {
     const answerRef = ref(database, `rooms/${roomId}/answers`);
-
     onChildAdded(answerRef, async (snapshot) => {
         const answer = snapshot.val();
-
-        if (!answer?.sdp || !answer?.type || answer.to !== callerId) return;
+        if (!answer || answer.to !== callerId) return;
 
         const receiverId = snapshot.key;
-
         const pc = peerConnections[receiverId] || new RTCPeerConnection(config);
         peerConnections[receiverId] = pc;
 
-        // Attach local media if not already added
         localStream.getTracks().forEach(track => {
             if (!pc.getSenders().some(sender => sender.track === track)) {
                 pc.addTrack(track, localStream);
             }
         });
+
+        pc.ontrack = (event) => {
+            onTrack(event.streams[0], receiverId);
+        };
 
         pc.onicecandidate = (event) => {
             if (event.candidate) {
@@ -163,12 +126,6 @@ export const listenForAnswers = (roomId, callerId, onTrack) => {
             }
         };
 
-        // Handle remote track (receiver sending video back)
-        pc.ontrack = (event) => {
-            onTrack && onTrack(event.streams[0], receiverId);
-        };
-
-        // Set remote answer from receiver
         await pc.setRemoteDescription(new RTCSessionDescription({
             sdp: answer.sdp,
             type: answer.type
