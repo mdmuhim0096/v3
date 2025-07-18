@@ -10,7 +10,6 @@ import {
     remove,
 } from "firebase/database";
 
-
 let localStream;
 const peerConnections = {};
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
@@ -24,8 +23,7 @@ export const createCall = async (roomId, userId) => {
     const offerRef = ref(database, `rooms/${roomId}/offers/${userId}`);
     const pc = new RTCPeerConnection(config);
     peerConnections[userId] = pc;
-    socket.emit("join_room", roomId);
-    console.log("Creating call for room:", roomId, "user:", userId);
+    socket.emit("join_room", {roomId, userId});
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
     const offer = await pc.createOffer();

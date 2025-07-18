@@ -134,9 +134,9 @@ const ChatRoom = () => {
     useEffect(() => {
         const handelRoom = async (data) => {
             console.log("Room data received:", data);
-            const isMatch = await isMatchGroup(data);
+            const isMatch = await isMatchGroup(data.roomId);
             if (isMatch) {
-                navigate("/groupvideocall", { state: { roomId: data, isCaller: false, userId: localStorage.getItem("myId") } });
+                navigate("/groupvideocall", { state: { roomId: data.roomId, isCaller: false, userId: data.userId } });
             }
         }
 
