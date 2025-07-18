@@ -119,31 +119,33 @@ const ChatRoom = () => {
                 navigate("/audiocall", { state: { callId: data.callId, userId: data.userId, role: "receiver", info: data.info } });
             }
         }
-        
+
         socket.on("incoming_call_a", handleIncomingCall);
         return () => {
             socket.off("incoming_call_a", handleIncomingCall);
         }
     }, []);
 
-    async function isMatchGroup(id){
-       const res = await axios.get(server_port + `/api/group/isMatchGroup/${id}/${localStorage.getItem("myId")}`);
-       return res.data?.isMatch;
+    async function isMatchGroup(id) {
+        const res = await axios.get(server_port + `/api/group/isMatchGroup/${id}/${localStorage.getItem("myId")}`);
+        return res.data?.isMatch;
     }
 
-    useEffect(()=> {
+    useEffect(() => {
         const handelRoom = async (data) => {
+            console.log("Room data received:", data);
             const isMatch = await isMatchGroup(data);
-            console.log(isMatch, "isMatch");
-            if(isMatch === true || isMatch === "true") {
-                navigate("/groupvideocall", { state: { roomId: data, role: "receiver" } });
+            if (isMatch) {
+                navigate("/groupvideocall", { state: { roomId: data, isCaller: false, userId: localStorage.getItem("myId") } });
             }
         }
+
         socket.on("join_room", handelRoom);
         return () => {
             socket.off("join_room", handelRoom);
         }
     }, [])
+
 
     const get_chats = async (riciver, sender) => {
         await axios.post(server_port + "/api/people/getChat", { riciver, sender })
@@ -832,7 +834,7 @@ const ChatRoom = () => {
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
-                                <Link to={isCahtTab ? "/v" : "/groupvideocall"} state={isCahtTab ? { userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") } : {roomId: localStorage.getItem("groupId"), role: "coller"}} >
+                                <Link to={isCahtTab ? "/v" : "/groupvideocall"} state={isCahtTab ? { userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") } : { roomId: localStorage.getItem("groupId"), isCaller: true, userId: localStorage.getItem("myId") }} >
                                     <Video />
                                 </Link>
                                 <Link to={"/audiocall"} state={{ callId: __callId__ + localStorage.getItem("userId"), userId: localStorage.getItem("userId"), isDail: true, info: { img: localStorage.getItem("myImage"), name_: localStorage.getItem("myName") }, role: "caller" }}>
@@ -1078,7 +1080,7 @@ const ChatRoom = () => {
                     <div>
 
                     </div>
-                    <div onMouseDown={() => { setRecording(true) }} onTouchStart={() => {setRecording(true)}} onTouchEnd={() => {setRecording(false)}}>
+                    <div onMouseDown={() => { setRecording(true) }} onTouchStart={() => { setRecording(true) }} onTouchEnd={() => { setRecording(false) }}>
                         <VoiceButton onAudioReady={(e) => { vioceHandeler(e) }} />
                     </div>
                     <div>

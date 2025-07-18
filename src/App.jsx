@@ -25,7 +25,7 @@ import Removemember from "./component/Removemember";
 import { server_port } from "./component/api";
 import VideoCall from "./component/VideoCall";
 import AudioCall from "./component/Audiocall";
-import GroupVideoCall from "./component/GroupcallVideo";
+import GroupVideoCall from "./component/GroupVideoCall";
 
 const App = () => {
   const [styleSheet, setStyleSheet] = useState("");
