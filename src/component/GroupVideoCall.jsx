@@ -393,4 +393,3 @@ const VideoTile = ({ stream, userId }) => {
 };
 
 export default GroupVideoCall;
-

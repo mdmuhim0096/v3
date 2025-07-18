@@ -353,7 +353,8 @@
 //     return !audioTrack.enabled;
 //   }
 // };
-// ✅ groupVideoCallUtils.js (Final working version)
+// ✅ groupVideoCallUtils.js (Final working version);
+
 import socket from "../component/socket";
 import { database } from "../firebase";
 import {
@@ -372,11 +373,21 @@ const config = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
+      urls: "turn:relay.metered.ca:80",
+      username: "openai",
+      credential: "openai"
     },
-  ],
+    {
+      urls: "turn:relay.metered.ca:443",
+      username: "openai",
+      credential: "openai"
+    },
+    {
+      urls: "turn:relay.metered.ca:443?transport=tcp",
+      username: "openai",
+      credential: "openai"
+    }
+  ]
 };
 
 export const startMedia = async () => {
@@ -488,3 +499,4 @@ export const toggleMute = () => {
     return !audioTrack.enabled;
   }
 };
+
