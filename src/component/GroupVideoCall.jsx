@@ -54,7 +54,7 @@ const GroupVideoCall = () => {
       </div>
 
       <div className="controls">
-        <button onClick={handleReceive} disabled={callReceived}>
+        <button onClick={() => {handleReceive(); remoteVideoRef.current?.play()}}>
           📞 Receive Call
         </button>
         <button onClick={handleMuteToggle}>{muted ? "🎤 Unmute" : "🔇 Mute"}</button>
