@@ -39,11 +39,46 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
   return pc;
 };
 
+// export const createCall = async (callId, remoteVideoRef) => {
+//   const peerId = crypto.randomUUID();
+//   const pc = createPeerConnection(remoteVideoRef, callId, peerId);
+//   peerConnections[peerId] = pc;
+//   socket.emit("join_room", callId);
+//   const offer = await pc.createOffer();
+//   await pc.setLocalDescription(offer);
+
+//   const offerRef = ref(database, `calls/${callId}/offer`);
+//   await set(offerRef, {
+//     type: offer.type,
+//     sdp: offer.sdp,
+//   });
+
+//   onValue(ref(database, `calls/${callId}/answer`), async (snapshot) => {
+//     const data = snapshot.val();
+//     if (data && !pc.currentRemoteDescription) {
+//       await pc.setRemoteDescription(new RTCSessionDescription(data));
+//     }
+//   });
+
+//   onChildAdded(ref(database, `calls/${callId}/candidates/receiver`), async (snapshot) => {
+//     const candidate = new RTCIceCandidate(snapshot.val());
+//     await pc.addIceCandidate(candidate);
+//   });
+// };
+
 export const createCall = async (callId, remoteVideoRef) => {
   const peerId = crypto.randomUUID();
+
+  // ✅ FIX: Ensure localStream is available
+  if (!localStream) {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  }
+
   const pc = createPeerConnection(remoteVideoRef, callId, peerId);
   peerConnections[peerId] = pc;
+
   socket.emit("join_room", callId);
+
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
@@ -65,6 +100,7 @@ export const createCall = async (callId, remoteVideoRef) => {
     await pc.addIceCandidate(candidate);
   });
 };
+
 
 export const receiveCall = async (callId, remoteVideoRef) => {
   const peerId = "receiver";
