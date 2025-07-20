@@ -29,37 +29,48 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
     console.warn("⚠️ localStream is null when trying to add tracks.");
   }
 
+  // ✅ Handle remote stream
   pc.ontrack = (event) => {
     const [remoteStream] = event.streams;
     console.log("📡 Remote stream received:", remoteStream);
-    console.log("🎥 Video tracks:", remoteStream.getVideoTracks());
 
     if (!remoteStream) return;
 
-    const tryAttach = () => {
-      const videoEl = remoteRef?.current;
-      if (!videoEl) {
-        console.warn("❌ remoteRef.current is null. Retrying...");
-        return setTimeout(tryAttach, 200);
-      }
-
-      // Only set if it's a different stream
-      if (videoEl.srcObject !== remoteStream) {
-        videoEl.srcObject = remoteStream;
-      }
-
-      // Play with a delay to avoid load interruption
+    const videoEl = remoteRef?.current;
+    if (!videoEl) {
+      console.warn("❌ remoteRef.current is null. Will retry in 300ms...");
       setTimeout(() => {
-        videoEl
-          .play()
-          .then(() => console.log("✅ Remote video playing"))
-          .catch((err) =>
-            console.warn("🔇 Autoplay play() failed:", err.message)
-          );
-      }, 100); // 100ms delay helps avoid the autoplay/load error
-    };
+        if (remoteRef?.current) {
+          remoteRef.current.srcObject = remoteStream;
+          remoteRef.current
+            .play()
+            .then(() => console.log("▶️ Remote video playing after retry"))
+            .catch((err) => console.warn("🔇 Retry autoplay failed:", err.message));
+        }
+      }, 300);
+      return;
+    }
 
-    tryAttach();
+    // ✅ Only set if different
+    if (videoEl.srcObject !== remoteStream) {
+      videoEl.srcObject = remoteStream;
+    }
+
+    // ✅ Attempt playback
+    videoEl
+      .play()
+      .then(() => console.log("▶️ Remote video playing"))
+      .catch((err) => {
+        console.warn("🔇 Autoplay failed:", err.message);
+      });
+  };
+
+  // ✅ ICE candidate exchange
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
+      push(candidateRef, event.candidate.toJSON());
+    }
   };
 
   return pc;
