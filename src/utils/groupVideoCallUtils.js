@@ -1,117 +1,109 @@
+// src/utils/groupVideoCallUtils.js
+import { database, ref, set, onValue, remove, push, onChildAdded } from "../firebase";
+
+let peerConnections = {};
+let localStream = null;
+
 import socket from "../component/socket";
-import { database, ref, set, onValue, remove, push } from "../firebase";
 
-let pc = null;
 
-let existingStream = null;
+export const startMedia = async (videoRef) => {
+  if (!localStream) {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  }
+  if (videoRef) {
+    videoRef.srcObject = localStream;
+  }
+};
 
-export const startMedia = async (localVideoRef) => {
-    try {
-        if (!existingStream) {
-            existingStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        }
-        if (localVideoRef) {
-            localVideoRef.srcObject = existingStream;
-        }
-        return { localStream: existingStream };
-    } catch (err) {
-        throw new Error("Could not start video/audio. Make sure camera and mic are available and allowed.");
+const createPeerConnection = (remoteRef, callId, peerId) => {
+  const pc = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  });
+
+  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+  pc.ontrack = (event) => {
+    if (remoteRef?.current) {
+      remoteRef.current.srcObject = event.streams[0];
     }
-};
+  };
 
-export const createPeerConnection = (localStream, remoteVideoRef, callId, role = "caller") => {
-    pc = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-    });
-
-    if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
+      push(candidateRef, event.candidate.toJSON());
     }
+  };
 
-    pc.ontrack = (event) => {
-        if (remoteVideoRef) {
-            remoteVideoRef.srcObject = event.streams[0];
-        }
-    };
-
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            const candidatesRef = ref(database, `calls/${callId}/${role === "caller" ? "callerCandidates" : "calleeCandidates"}`);
-            push(candidatesRef, event.candidate.toJSON());
-        }
-    };
+  return pc;
 };
 
-export const createCall = async (callId, localStream, remoteVideoRef) => {
-    createPeerConnection(localStream, remoteVideoRef, callId, "caller");
+export const createCall = async (callId, remoteVideoRef) => {
+  const peerId = crypto.randomUUID();
+  const pc = createPeerConnection(remoteVideoRef, callId, peerId);
+  peerConnections[peerId] = pc;
+  socket.emit("join_room", callId);
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
 
-    socket.emit("join_room", callId);
+  const offerRef = ref(database, `calls/${callId}/offer`);
+  await set(offerRef, {
+    type: offer.type,
+    sdp: offer.sdp,
+  });
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    const callRef = ref(database, `calls/${callId}`);
-    await set(callRef, {
-        offer: {
-            type: offer.type,
-            sdp: offer.sdp,
-        }
-    });
-
-    onValue(ref(database, `calls/${callId}/answer`), async (snapshot) => {
-        const data = snapshot.val();
-        if (data && !pc.currentRemoteDescription) {
-            const answer = new RTCSessionDescription(data);
-            await pc.setRemoteDescription(answer);
-        }
-    });
-
-    onValue(ref(database, `calls/${callId}/calleeCandidates`), (snapshot) => {
-        snapshot.forEach(child => {
-            const candidate = new RTCIceCandidate(child.val());
-            pc.addIceCandidate(candidate);
-        });
-    });
-};
-
-export const joinCall = async (callId, localStream, remoteVideoRef) => {
-    createPeerConnection(localStream, remoteVideoRef, callId, "callee");
-    socket.emit("join_call_v", callId);
-    const callRef = ref(database, `calls/${callId}`);
-    const snapshot = await new Promise(resolve => onValue(callRef, resolve, { onlyOnce: true }));
-
+  onValue(ref(database, `calls/${callId}/answer`), async (snapshot) => {
     const data = snapshot.val();
-    if (!data?.offer) return;
+    if (data && !pc.currentRemoteDescription) {
+      await pc.setRemoteDescription(new RTCSessionDescription(data));
+    }
+  });
 
-    await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
+  onChildAdded(ref(database, `calls/${callId}/candidates/receiver`), async (snapshot) => {
+    const candidate = new RTCIceCandidate(snapshot.val());
+    await pc.addIceCandidate(candidate);
+  });
+};
 
-    await set(ref(database, `calls/${callId}/answer`), {
-        type: answer.type,
-        sdp: answer.sdp,
-    });
+export const receiveCall = async (callId, remoteVideoRef) => {
+  const peerId = "receiver";
+  const offerSnap = await new Promise((resolve) => {
+    onValue(ref(database, `calls/${callId}/offer`), resolve, { onlyOnce: true });
+  });
 
-    onValue(ref(database, `calls/${callId}/callerCandidates`), (snapshot) => {
-        snapshot.forEach(child => {
-            const candidate = new RTCIceCandidate(child.val());
-            pc.addIceCandidate(candidate);
-        });
-    });
+  const offerData = offerSnap.val();
+  if (!offerData) return;
+
+  const pc = createPeerConnection(remoteVideoRef, callId, peerId);
+  peerConnections[peerId] = pc;
+
+  await pc.setRemoteDescription(new RTCSessionDescription(offerData));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  await set(ref(database, `calls/${callId}/answer`), {
+    type: answer.type,
+    sdp: answer.sdp,
+  });
+
+  onChildAdded(ref(database, `calls/${callId}/candidates/${peerId}`), async (snapshot) => {
+    const candidate = new RTCIceCandidate(snapshot.val());
+    await pc.addIceCandidate(candidate);
+  });
+};
+
+export const toggleMute = () => {
+  if (!localStream) return;
+  const audioTrack = localStream.getAudioTracks()[0];
+  if (audioTrack) {
+    audioTrack.enabled = !audioTrack.enabled;
+    return !audioTrack.enabled;
+  }
 };
 
 export const hangUp = async (callId) => {
-    if (pc) {
-        pc.close();
-        pc = null;
-    }
-    await remove(ref(database, `calls/${callId}`));
-};
-
-export const toggleMute = (localVideoRef) => {
-    const stream = localVideoRef.srcObject;
-    if (!stream) return;
-    const audioTrack = stream.getAudioTracks()[0];
-    audioTrack.enabled = !audioTrack.enabled;
-    return !audioTrack.enabled;
+  Object.values(peerConnections).forEach((pc) => pc.close());
+  peerConnections = {};
+  await remove(ref(database, `calls/${callId}`));
 };

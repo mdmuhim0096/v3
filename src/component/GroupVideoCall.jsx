@@ -1,109 +1,73 @@
-
+// src/components/GroupCall.jsx
 import React, { useEffect, useRef, useState } from "react";
-import socket from "./socket";
-import { useNavigate } from "react-router-dom";
 import {
-    startMedia,
-    createCall,
-    joinCall,
-    hangUp,
-    toggleMute
+  startMedia,
+  createCall,
+  receiveCall,
+  toggleMute,
+  hangUp
 } from "../utils/groupVideoCallUtils";
+import { useLocation, useNavigate } from "react-router-dom"
 
-import { useLocation } from "react-router-dom";
-import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
-import Timer from "./Timer";
+const GroupCall = () => {
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const [joined, setJoined] = useState(false);
+  const { callId, role } = useLocation()?.state || {}
+  const navigate = useNavigate();
+  
+  const handleCreate = async () => {
+    await startMedia(localVideoRef.current);
+    await createCall(callId, remoteVideoRef);
+    setJoined(true);
+  };
 
-function GroupVideoCall() {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { callId, role } = location?.state || {};
+  useEffect(() => {
+    if (role === "caller") {
+      handleCreate();
+    }
+  }, [])
 
-    const [isMuted, setIsMuted] = useState(false);
-    const [isCalling, setIsCalling] = useState(false);
-    const [mediaError, setMediaError] = useState(null);
+  const handleReceive = async () => {
+    await receiveCall(callId, remoteVideoRef);
+    setJoined(true);
+  };
 
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
-    const localStreamRef = useRef(null);
+  const handleLeave = async () => {
+    await hangUp(callId);
+    setJoined(false);
+    navigate("/chatroom")
+    window.location.reload();
+  };
 
-    // Caller: start call automatically
-    useEffect(() => {
-        const init = async () => {
-            try {
-                if (role === "caller") {
-                    const { localStream } = await startMedia(localVideoRef.current);
-                    localStreamRef.current = localStream;
-                    await createCall(callId, localStreamRef.current, remoteVideoRef.current);
-                }
-            } catch (err) {
-                console.error("Caller media error:", err);
-                setMediaError("Camera/mic error (maybe already in use or blocked).");
-            }
-        };
-        init();
-    }, [role, callId]);
+  return (
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Simple Video Call</h1>
 
-    // Receiver: only start media on button click //
-    const handleJoinCall = async () => {
-        try {
-            const { localStream } = await startMedia(localVideoRef.current);
-            localStreamRef.current = localStream;
-
-            await joinCall(callId, localStreamRef.current, remoteVideoRef.current);
-            setIsCalling(true);
-        } catch (err) {
-            console.error("Join error:", err);
-            setMediaError("Failed to access camera/mic. Is another tab using it?");
-        }
-    };
-
-    async function handleHangUp() {
-        try {
-            await hangUp(callId);
-            navigate("/chatroom");
-            window.location.reload();
-        } catch (err) {
-            console.error("Hang up error:", err);
-        }
-    };
-
-    const handleMute = () => {
-        const muted = toggleMute(localVideoRef.current);
-        setIsMuted(muted);
-    };
-
-    return (
-        <div className="w-full h-screen flex justify-center items-center md:p-4">
-            <div className="relative w-full h-full overflow-hidden flex flex-col items-center">
-                <video ref={localVideoRef} autoPlay muted playsInline className="h-40 w-24 md:w-64 md:h-40 rounded shadow -scale-x-125 absolute object-fill z-20 top-0 md:left-9 left-3" />
-                <video ref={remoteVideoRef} autoPlay playsInline className="object-fill w-full h-full absolute top-0 left-0" />
-
-                <div className="absolute z-10 bottom-1">
-                    {isCalling ? <h6 className="text-center mb-6">
-                        <Timer isCallActive={isCalling} />
-                    </h6> : null}
-
-                    <div className="flex justify-center gap-6 ">
-                        {role === "receiver" && (
-                            <span onClick={handleJoinCall} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border text-green-600">
-                                <Phone />
-                            </span>
-                        )}
-                        <span onClick={handleHangUp} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border text-red-500">
-                            <PhoneOff />
-                        </span>
-
-                        <span onClick={handleMute} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border">
-                            {isMuted ? <MicOff className="text-red-600" /> : <Mic className="text-blue-600" />}
-                        </span>
-                    </div>
-                </div>
-
-            </div>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <video ref={localVideoRef} autoPlay playsInline muted className="w-full bg-black rounded" />
+          <p className="text-center mt-1">You</p>
         </div>
-    );
-}
+        <div>
+          <video ref={remoteVideoRef} autoPlay playsInline className="w-full bg-black rounded" />
+          <p className="text-center mt-1">Remote</p>
+        </div>
+      </div>
 
-export default GroupVideoCall;
+      <div className="flex gap-3 flex-wrap">
+        {role !== "caller" ? <button onClick={handleReceive} className="bg-green-600 text-white px-4 py-2 rounded">
+          Receive Call
+        </button> : null}
+        <button onClick={toggleMute} className="bg-yellow-500 text-white px-4 py-2 rounded">
+          Mute/Unmute
+        </button>
+        <button onClick={handleLeave} className="bg-red-600 text-white px-4 py-2 rounded">
+          Leave
+        </button>
+      </div>
+    </div>
+  );
+};
 
+export default GroupCall;
