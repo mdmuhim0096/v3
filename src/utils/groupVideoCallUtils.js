@@ -43,6 +43,8 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
     if (!remoteStream) return;
 
     let retries = 0;
+    let attached = false;
+
     const attachRemoteStream = () => {
       const videoEl = remoteRef?.current;
       if (!videoEl) {
@@ -55,29 +57,29 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
         }
       }
 
-      // ✅ Assign stream and mute BEFORE playing
-      videoEl.srcObject = remoteStream;
-      videoEl.muted = true;
-      videoEl.autoplay = true;
-      videoEl.playsInline = true;
+      if (!attached) {
+        videoEl.srcObject = remoteStream;
+        videoEl.muted = true; // still needed for autoplay on mobile
+        videoEl.autoplay = true;
+        videoEl.playsInline = true;
+        attached = true;
+      }
 
-      const tryPlay = () => {
-        videoEl.play().then(() => {
+      videoEl
+        .play()
+        .then(() => {
           console.log("▶️ Remote video playing");
-        }).catch((err) => {
+        })
+        .catch((err) => {
           if (retries < 10) {
             console.warn("🔄 Retrying remote video playback...", err.message);
             retries++;
-            setTimeout(tryPlay, 300);
+            setTimeout(attachRemoteStream, 300); // Retry only if play fails
           } else {
             console.error("❌ Still failed to play remote video after 10 retries");
           }
         });
-      };
-
-      tryPlay();
     };
-
     attachRemoteStream();
   };
 
