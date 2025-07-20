@@ -339,10 +339,25 @@ let localStream = null;
 
 export const startMedia = async (videoRef) => {
   if (!localStream) {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch (err) {
+      console.error("🚫 Media access error:", err);
+      return;
+    }
   }
-  if (videoRef) {
-    videoRef.srcObject = localStream;
+
+  if (videoRef?.current) {
+    videoRef.current.srcObject = localStream;
+    videoRef.current.muted = true; // ✅ Mute local stream
+    videoRef.current.autoplay = true;
+    videoRef.current.playsInline = true;
+
+    // ✅ Safe play
+    videoRef.current
+      .play()
+      .then(() => console.log("▶️ Local video playing"))
+      .catch((err) => console.warn("🔇 Couldn't play local video:", err.message));
   }
 };
 
