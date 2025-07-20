@@ -16,28 +16,74 @@ export const startMedia = async (videoRef) => {
   }
 };
 
+// const createPeerConnection = (remoteRef, callId, peerId) => {
+//   const pc = new RTCPeerConnection({
+//     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//   });
+
+//   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+//   pc.ontrack = (event) => {
+//   const [remoteStream] = event.streams;
+//   console.log("📡 Remote stream received:", remoteStream);
+
+//   if (!remoteStream) return;
+
+//   const tryAttachVideo = () => {
+//     const videoEl = remoteRef?.current;
+//     if (videoEl) {
+//       videoEl.srcObject = remoteStream;
+//       const playPromise = videoEl.play();
+//       if (playPromise !== undefined) {
+//         playPromise.catch(err => {
+//           console.warn("🔇 Autoplay blocked or failed:", err.message);
+//         });
+//       }
+//     } else {
+//       console.warn("❌ remoteRef.current is null. Retrying...");
+//       setTimeout(tryAttachVideo, 300); // Retry after a short delay
+//     }
+//   };
+
+//   tryAttachVideo(); // Run initially
+// };
+
+//   return pc;
+// };
+
+
 const createPeerConnection = (remoteRef, callId, peerId) => {
   const pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   });
 
+  // ✅ Add local tracks to connection
   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
+  // ✅ Handle remote media
   pc.ontrack = (event) => {
-    const remoteStream = event.streams[0];
+    const [remoteStream] = event.streams;
     console.log("📡 Remote stream received:", remoteStream);
 
-    if (remoteRef?.current) {
-      remoteRef.current.srcObject = remoteStream;
-      remoteRef.current.play().catch(err => console.warn("Autoplay failed:", err));
-    } else {
-      setTimeout(() => {
-        if (remoteRef?.current) {
-          remoteRef.current.srcObject = remoteStream;
-          remoteRef.current.play().catch(err => console.warn("Autoplay failed:", err));
+    if (!remoteStream) return;
+
+    const tryAttachVideo = () => {
+      const videoEl = remoteRef?.current;
+      if (videoEl) {
+        videoEl.srcObject = remoteStream;
+        const playPromise = videoEl.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn("🔇 Autoplay blocked or failed:", err.message);
+          });
         }
-      }, 500);
-    }
+      } else {
+        console.warn("❌ remoteRef.current is null. Retrying...");
+        setTimeout(tryAttachVideo, 300); // Retry after a short delay
+      }
+    };
+
+    tryAttachVideo();
   };
 
   return pc;
