@@ -395,8 +395,8 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
 };
 
 export const createCall = async (callId, remoteVideoRef) => {
-  const peerId = crypto.randomUUID();
-
+  const peerId = "caller";
+  
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   }
