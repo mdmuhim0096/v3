@@ -199,7 +199,9 @@ const GroupVideoCall = () => {
 
   const handleReceive = async () => {
     setCallReceived(true);
-    await receiveCall(callId, remoteVideoRef);
+    setTimeout(() => {
+      receiveCall(callId, remoteVideoRef);
+    }, 600);
   };
 
   const handleMuteToggle = () => {
