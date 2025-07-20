@@ -51,45 +51,61 @@ export const startMedia = async (videoRef) => {
 //   return pc;
 // };
 
-
 const createPeerConnection = (remoteRef, callId, peerId) => {
   const pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   });
 
-  // ✅ Add local tracks to connection
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+  // ✅ Attach local stream tracks
+  if (localStream) {
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+  } else {
+    console.warn("⚠️ localStream is null when trying to add tracks.");
+  }
 
-  // ✅ Handle remote media
+  // ✅ Handle remote stream
   pc.ontrack = (event) => {
-  const [remoteStream] = event.streams;
-  console.log("📡 Remote stream received:", remoteStream);
+    const [remoteStream] = event.streams;
+    console.log("📡 Remote stream received:", remoteStream);
 
-  if (!remoteStream) return;
+    if (!remoteStream) return;
 
-  const videoEl = remoteRef?.current;
-  if (!videoEl) {
-    console.warn("❌ remoteRef.current is null. Retrying...");
-    setTimeout(() => pc.ontrack(event), 300); // Retry later
-    return;
-  }
+    const videoEl = remoteRef?.current;
+    if (!videoEl) {
+      console.warn("❌ remoteRef.current is null. Will retry in 300ms...");
+      setTimeout(() => {
+        if (remoteRef?.current) {
+          remoteRef.current.srcObject = remoteStream;
+          remoteRef.current
+            .play()
+            .then(() => console.log("▶️ Remote video playing after retry"))
+            .catch((err) => console.warn("🔇 Retry autoplay failed:", err.message));
+        }
+      }, 300);
+      return;
+    }
 
-  // ✅ Only set srcObject if it’s not already set to this stream
-  if (videoEl.srcObject !== remoteStream) {
-    videoEl.srcObject = remoteStream;
-  }
+    // ✅ Only set if different
+    if (videoEl.srcObject !== remoteStream) {
+      videoEl.srcObject = remoteStream;
+    }
 
-  // ✅ Wait briefly before trying to play
-  setTimeout(() => {
+    // ✅ Attempt playback
     videoEl
       .play()
       .then(() => console.log("▶️ Remote video playing"))
       .catch((err) => {
         console.warn("🔇 Autoplay failed:", err.message);
       });
-  }, 200); // delay helps avoid race condition
-};
+  };
 
+  // ✅ ICE candidate exchange
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
+      push(candidateRef, event.candidate.toJSON());
+    }
+  };
 
   return pc;
 };
