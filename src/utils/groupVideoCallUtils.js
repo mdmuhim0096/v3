@@ -62,29 +62,34 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
 
   // ✅ Handle remote media
   pc.ontrack = (event) => {
-    const [remoteStream] = event.streams;
-    console.log("📡 Remote stream received:", remoteStream);
+  const [remoteStream] = event.streams;
+  console.log("📡 Remote stream received:", remoteStream);
 
-    if (!remoteStream) return;
+  if (!remoteStream) return;
 
-    const tryAttachVideo = () => {
-      const videoEl = remoteRef?.current;
-      if (videoEl) {
-        videoEl.srcObject = remoteStream;
-        const playPromise = videoEl.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(err => {
-            console.warn("🔇 Autoplay blocked or failed:", err.message);
-          });
-        }
-      } else {
-        console.warn("❌ remoteRef.current is null. Retrying...");
-        setTimeout(tryAttachVideo, 300); // Retry after a short delay
-      }
-    };
+  const videoEl = remoteRef?.current;
+  if (!videoEl) {
+    console.warn("❌ remoteRef.current is null. Retrying...");
+    setTimeout(() => pc.ontrack(event), 300); // Retry later
+    return;
+  }
 
-    tryAttachVideo();
-  };
+  // ✅ Only set srcObject if it’s not already set to this stream
+  if (videoEl.srcObject !== remoteStream) {
+    videoEl.srcObject = remoteStream;
+  }
+
+  // ✅ Wait briefly before trying to play
+  setTimeout(() => {
+    videoEl
+      .play()
+      .then(() => console.log("▶️ Remote video playing"))
+      .catch((err) => {
+        console.warn("🔇 Autoplay failed:", err.message);
+      });
+  }, 200); // delay helps avoid race condition
+};
+
 
   return pc;
 };
