@@ -311,56 +311,35 @@ export const createCall = async (callId, remoteVideoRef) => {
   });
 };
 
-// // 📥 Receive call (receiver)
-// export const receiveCall = async (callId, remoteVideoRef) => {
-//   const peerId = "receiver";
 
-//   while (!remoteVideoRef?.current) {
-//     console.warn("🕰️ Waiting for remoteVideoRef...");
-//     await new Promise((res) => setTimeout(res, 300));
-//   }
-
-//   if (!localStream) {
-//     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-//   }
-
-//   const offerSnap = await new Promise((resolve) => {
-//     onValue(ref(database, `calls/${callId}/offer`), resolve, { onlyOnce: true });
-//   });
-
-//   const offerData = offerSnap.val();
-//   if (!offerData) {
-//     console.warn("❌ No offer found");
-//     return;
-//   }
-
-//   const pc = createPeerConnection(remoteVideoRef, callId, peerId);
-//   peerConnections[peerId] = pc;
-
-//   await pc.setRemoteDescription(new RTCSessionDescription(offerData));
-//   const answer = await pc.createAnswer();
-//   await pc.setLocalDescription(answer);
-//   await set(ref(database, `calls/${callId}/answer`), answer);
-
-//   onChildAdded(ref(database, `calls/${callId}/candidates/${peerId}`), async (snapshot) => {
-//     const candidate = new RTCIceCandidate(snapshot.val());
-//     await pc.addIceCandidate(candidate);
-//   });
-// };
-
-// 📥 Receive call (receiver)
-export const receiveCall = async (callId, remoteVideoRef) => {
+export const receiveCall = async (callId, remoteVideoRef, localVideoRef) => {
   const peerId = "receiver";
 
+  // Wait for remote video element
   while (!remoteVideoRef?.current) {
     console.warn("🕰️ Waiting for remoteVideoRef...");
     await new Promise((res) => setTimeout(res, 300));
   }
 
+  // Get local media stream (video + audio)
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   }
 
+  // Attach localStream to localVideoRef if provided
+  if (localVideoRef?.current && localStream) {
+    localVideoRef.current.srcObject = localStream;
+    localVideoRef.current.muted = true; // mute local preview
+    localVideoRef.current.autoplay = true;
+    localVideoRef.current.playsInline = true;
+    try {
+      await localVideoRef.current.play();
+    } catch (err) {
+      console.warn("⚠️ local video play error:", err.message);
+    }
+  }
+
+  // Get offer from Firebase
   const offerSnap = await new Promise((resolve) => {
     onValue(ref(database, `calls/${callId}/offer`), resolve, { onlyOnce: true });
   });
@@ -371,19 +350,35 @@ export const receiveCall = async (callId, remoteVideoRef) => {
     return;
   }
 
+  // Create peer connection with remote video ref
   const pc = createPeerConnection(remoteVideoRef, callId, peerId);
   peerConnections[peerId] = pc;
 
+  // Set remote description (offer)
   await pc.setRemoteDescription(new RTCSessionDescription(offerData));
+
+  // Create and set local description (answer)
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
+
+  // Save answer in Firebase
   await set(ref(database, `calls/${callId}/answer`), answer);
 
-  onChildAdded(ref(database, `calls/${callId}/candidates/${peerId}`), async (snapshot) => {
+  // Listen for ICE candidates from caller and add them
+  const callerCandidatesRef = ref(database, `calls/${callId}/candidates/caller`);
+  const unsubscribe = onChildAdded(callerCandidatesRef, async (snapshot) => {
     const candidate = new RTCIceCandidate(snapshot.val());
     await pc.addIceCandidate(candidate);
   });
-}
+
+  // Return cleanup to call on hangup or unmount
+  return () => {
+    unsubscribe();
+    pc.close();
+    delete peerConnections[peerId];
+  };
+};
+
 
 // 🔇 Toggle mute
 export const toggleMute = () => {
