@@ -31,10 +31,6 @@ const GroupVideoCall = () => {
   }, [callId]);
 
   const handleReceive = async () => {
-    if (remoteVideoRef) {
-      alert("video is null");
-      return;
-    }
     setCallReceived(true);
     await receiveCall(callId, remoteVideoRef);
   };

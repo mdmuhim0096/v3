@@ -124,6 +124,8 @@ export const createCall = async (callId, remoteVideoRef) => {
 
 export const receiveCall = async (callId, remoteVideoRef) => {
 
+  console.log("--__-----__--: ", remoteVideoRef)
+
   const peerId = "receiver";
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -148,6 +150,8 @@ export const receiveCall = async (callId, remoteVideoRef) => {
     const candidate = new RTCIceCandidate(snapshot.val());
     await pc.addIceCandidate(candidate);
   });
+
+  console.log("--__-----__--: ", remoteVideoRef)
 
 };
 
