@@ -104,6 +104,12 @@ export const createCall = async (callId, remoteVideoRef) => {
 
 export const receiveCall = async (callId, remoteVideoRef) => {
   const peerId = "receiver";
+
+  // ✅ FIX: Ensure localStream is initialized
+  if (!localStream) {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  }
+
   const offerSnap = await new Promise((resolve) => {
     onValue(ref(database, `calls/${callId}/offer`), resolve, { onlyOnce: true });
   });
