@@ -24,47 +24,25 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
   pc.ontrack = (event) => {
-    if (remoteRef?.current) {
-      remoteRef.current.srcObject = event.streams[0];
-    }
-  };
+    const remoteStream = event.streams[0];
+    console.log("📡 Remote stream received:", remoteStream);
 
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
-      push(candidateRef, event.candidate.toJSON());
+    if (remoteRef?.current) {
+      remoteRef.current.srcObject = remoteStream;
+      remoteRef.current.play().catch(err => console.warn("Autoplay failed:", err));
+    } else {
+      setTimeout(() => {
+        if (remoteRef?.current) {
+          remoteRef.current.srcObject = remoteStream;
+          remoteRef.current.play().catch(err => console.warn("Autoplay failed:", err));
+        }
+      }, 500);
     }
   };
 
   return pc;
 };
 
-// export const createCall = async (callId, remoteVideoRef) => {
-//   const peerId = crypto.randomUUID();
-//   const pc = createPeerConnection(remoteVideoRef, callId, peerId);
-//   peerConnections[peerId] = pc;
-//   socket.emit("join_room", callId);
-//   const offer = await pc.createOffer();
-//   await pc.setLocalDescription(offer);
-
-//   const offerRef = ref(database, `calls/${callId}/offer`);
-//   await set(offerRef, {
-//     type: offer.type,
-//     sdp: offer.sdp,
-//   });
-
-//   onValue(ref(database, `calls/${callId}/answer`), async (snapshot) => {
-//     const data = snapshot.val();
-//     if (data && !pc.currentRemoteDescription) {
-//       await pc.setRemoteDescription(new RTCSessionDescription(data));
-//     }
-//   });
-
-//   onChildAdded(ref(database, `calls/${callId}/candidates/receiver`), async (snapshot) => {
-//     const candidate = new RTCIceCandidate(snapshot.val());
-//     await pc.addIceCandidate(candidate);
-//   });
-// };
 
 export const createCall = async (callId, remoteVideoRef) => {
   const peerId = crypto.randomUUID();
