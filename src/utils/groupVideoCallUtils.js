@@ -14,23 +14,11 @@
 //       return;
 //     }
 //   }
-
-//   if (videoRef?.current) {
-//     videoRef.current.srcObject = localStream;
-//     videoRef.current.muted = true; // ✅ Mute local stream
-//     videoRef.current.autoplay = true;
-//     videoRef.current.playsInline = true;
-
-//     // ✅ Safe play
-//     videoRef.current
-//       .play()
-//       .then(() => console.log("▶️ Local video playing"))
-//       .catch((err) => console.warn("🔇 Couldn't play local video:", err.message));
-//   }
 // };
 
 
 // const createPeerConnection = (remoteRef, callId, peerId) => {
+
 //   const pc = new RTCPeerConnection({
 //     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 //   });
@@ -181,14 +169,14 @@
 
 
 
-
-// src/utils/groupVideoCallUtils.js
+// groupVideoCallUtils.js
 import { database, ref, set, onValue, remove, push, onChildAdded } from "../firebase";
 import socket from "../component/socket";
 
 let peerConnections = {};
 let localStream = null;
 
+// 📷 Start media
 export const startMedia = async (videoRef) => {
   if (!localStream) {
     try {
@@ -199,22 +187,30 @@ export const startMedia = async (videoRef) => {
     }
   }
 
-  if (videoRef?.current) {
+  if (videoRef?.current && localStream) {
     videoRef.current.srcObject = localStream;
     videoRef.current.muted = true;
     videoRef.current.autoplay = true;
     videoRef.current.playsInline = true;
-
-    videoRef.current
-      .play()
-      .then(() => console.log("▶️ Local video playing"))
-      .catch((err) => console.warn("🔇 Couldn't play local video:", err.message));
+    try {
+      await videoRef.current.play();
+    } catch (err) {
+      console.warn("⚠️ local video play() error:", err.message);
+    }
   }
 };
 
+// 🔗 Create peer connection
 const createPeerConnection = (remoteRef, callId, peerId) => {
   const pc = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ]
   });
 
   if (localStream) {
@@ -222,24 +218,24 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
   }
 
   pc.ontrack = (event) => {
-    const [remoteStream] = event.streams;
-    if (!remoteStream) return;
+    console.log("📡 ontrack received from:", peerId, event.track.kind);
 
-    let retries = 0;
-    const waitAndAttach = () => {
+    let remoteStream = event.streams[0];
+    if (!remoteStream) {
+      remoteStream = new MediaStream();
+      remoteStream.addTrack(event.track);
+    }
+
+    const attachStream = () => {
       const videoEl = remoteRef?.current;
       if (!videoEl) {
-        if (retries < 20) {
-          retries++;
-          return setTimeout(waitAndAttach, 300);
-        } else {
-          console.error("❌ remoteVideoRef not ready after 20 retries");
-          return;
-        }
+        console.warn("❌ remote video element not ready.");
+        return;
       }
 
       if (videoEl.srcObject !== remoteStream) {
         videoEl.srcObject = remoteStream;
+        console.log("🎬 Remote stream attached.");
       }
 
       videoEl.muted = true;
@@ -248,11 +244,20 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
 
       videoEl
         .play()
-        .then(() => console.log("▶️ Remote video playing"))
+        .then(() => console.log("▶️ Remote video is playing."))
         .catch((err) => console.warn("❌ play() failed:", err.message));
     };
 
-    waitAndAttach();
+    let retries = 0;
+    const waitForVideo = () => {
+      if (!remoteRef?.current && retries < 20) {
+        retries++;
+        setTimeout(waitForVideo, 300);
+      } else {
+        attachStream();
+      }
+    };
+    waitForVideo();
   };
 
   pc.onicecandidate = (event) => {
@@ -265,8 +270,14 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
   return pc;
 };
 
+// 📞 Create call (caller)
 export const createCall = async (callId, remoteVideoRef) => {
   const peerId = "caller";
+
+  while (!remoteVideoRef?.current) {
+    console.warn("🕰️ Waiting for remoteVideoRef...");
+    await new Promise((res) => setTimeout(res, 300));
+  }
 
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -294,15 +305,17 @@ export const createCall = async (callId, remoteVideoRef) => {
   });
 };
 
+// 📥 Receive call (receiver)
 export const receiveCall = async (callId, remoteVideoRef) => {
   const peerId = "receiver";
 
-  if (!localStream) {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  while (!remoteVideoRef?.current) {
+    console.warn("🕰️ Waiting for remoteVideoRef...");
+    await new Promise((res) => setTimeout(res, 300));
   }
 
-  if (!remoteVideoRef?.current) {
-    await new Promise((res) => setTimeout(res, 500));
+  if (!localStream) {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   }
 
   const offerSnap = await new Promise((resolve) => {
@@ -329,6 +342,7 @@ export const receiveCall = async (callId, remoteVideoRef) => {
   });
 };
 
+// 🔇 Toggle mute
 export const toggleMute = () => {
   if (!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -338,6 +352,7 @@ export const toggleMute = () => {
   }
 };
 
+// ❌ Hang up
 export const hangUp = async (callId) => {
   Object.values(peerConnections).forEach((pc) => pc.close());
   peerConnections = {};
