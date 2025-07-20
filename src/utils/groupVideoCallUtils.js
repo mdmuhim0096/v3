@@ -38,39 +38,36 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
 
     const videoEl = remoteRef?.current;
     if (!videoEl) {
-      console.warn("❌ remoteRef.current is null. Will retry in 300ms...");
+      console.warn("❌ remoteRef.current is null. Will retry...");
       setTimeout(() => {
-        if (remoteRef?.current) {
-          remoteRef.current.srcObject = remoteStream;
-          remoteRef.current
-            .play()
-            .then(() => console.log("▶️ Remote video playing after retry"))
-            .catch((err) => console.warn("🔇 Retry autoplay failed:", err.message));
+        const retryEl = remoteRef?.current;
+        if (retryEl) {
+          retryEl.srcObject = remoteStream;
+          setTimeout(() => {
+            retryEl
+              .play()
+              .then(() => console.log("▶️ Retry video playing"))
+              .catch((err) => console.warn("🔇 Retry failed:", err.message));
+          }, 100);
         }
       }, 300);
       return;
     }
 
-    // ✅ Only set if different
+    // ✅ Check before setting to avoid triggering new load
     if (videoEl.srcObject !== remoteStream) {
       videoEl.srcObject = remoteStream;
     }
 
-    // ✅ Attempt playback
-    videoEl
-      .play()
-      .then(() => console.log("▶️ Remote video playing"))
-      .catch((err) => {
-        console.warn("🔇 Autoplay failed:", err.message);
-      });
-  };
-
-  // ✅ ICE candidate exchange
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
-      push(candidateRef, event.candidate.toJSON());
-    }
+    // ✅ Wait briefly before playing
+    setTimeout(() => {
+      videoEl
+        .play()
+        .then(() => console.log("▶️ Remote video playing"))
+        .catch((err) =>
+          console.warn("🔇 Autoplay play() failed:", err.message)
+        );
+    }, 150);
   };
 
   return pc;
