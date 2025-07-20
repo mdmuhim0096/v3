@@ -18,7 +18,7 @@ const GroupCall = () => {
 
   useEffect(() => {
     const media = async () => {
-       await startMedia(localVideoRef.current);
+      await startMedia(localVideoRef.current);
     }
     media();
   }, []);
@@ -56,7 +56,10 @@ const GroupCall = () => {
           <p className="text-center mt-1">You</p>
         </div>
         <div>
-          <video ref={remoteVideoRef} autoPlay playsInline className="w-full bg-black rounded" />
+          <video ref={remoteVideoRef} autoPlay
+            playsInline
+            muted={false}
+            controls={false} className="w-full bg-black rounded" />
           <p className="text-center mt-1">Remote</p>
         </div>
       </div>

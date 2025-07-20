@@ -36,43 +36,48 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
 
     if (!remoteStream) return;
 
-    const videoEl = remoteRef?.current;
-    if (!videoEl) {
-      console.warn("❌ remoteRef.current is null. Will retry...");
-      setTimeout(() => {
-        const retryEl = remoteRef?.current;
-        if (retryEl) {
-          retryEl.srcObject = remoteStream;
-          setTimeout(() => {
-            retryEl
-              .play()
-              .then(() => console.log("▶️ Retry video playing"))
-              .catch((err) => console.warn("🔇 Retry failed:", err.message));
-          }, 100);
-        }
-      }, 300);
-      return;
-    }
+    const attachRemoteStream = () => {
+      const videoEl = remoteRef?.current;
 
-    // ✅ Check before setting to avoid triggering new load
-    if (videoEl.srcObject !== remoteStream) {
+      if (!videoEl) {
+        console.warn("❌ remoteRef.current is null. Will retry...");
+        setTimeout(attachRemoteStream, 200); // Retry until video is available
+        return;
+      }
+
+      // Force load new stream
+      videoEl.srcObject = null;
       videoEl.srcObject = remoteStream;
-    }
 
-    // ✅ Wait briefly before playing
-    setTimeout(() => {
-      videoEl
-        .play()
-        .then(() => console.log("▶️ Remote video playing"))
-        .catch((err) =>
-          console.warn("🔇 Autoplay play() failed:", err.message)
-        );
-    }, 150);
+      const play = () => {
+        videoEl
+          .play()
+          .then(() => console.log("▶️ Remote video playing"))
+          .catch((err) => {
+            console.warn("🔇 play() failed, trying muted workaround:", err.message);
+            videoEl.muted = true;
+            videoEl
+              .play()
+              .then(() => console.log("▶️ Remote video playing with muted workaround"))
+              .catch((err) => console.warn("❌ Still can't play:", err.message));
+          });
+      };
+
+      // Try playing after forcing srcObject change
+      setTimeout(play, 100);
+    };
+
+    attachRemoteStream();
   };
 
   return pc;
 };
 
+///
+
+
+
+///
 
 export const createCall = async (callId, remoteVideoRef) => {
   const peerId = crypto.randomUUID();
