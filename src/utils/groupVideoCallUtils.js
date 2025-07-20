@@ -245,7 +245,13 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
       videoEl
         .play()
         .then(() => console.log("▶️ Remote video is playing."))
-        .catch((err) => console.warn("❌ play() failed:", err.message));
+        .catch((err) => {
+          console.error("❌ play() failed:", err.message);
+          // 🔍 Show more context
+          console.log("💡 Current srcObject:", videoEl.srcObject);
+          console.log("💡 Ready state:", videoEl.readyState);
+          console.log("💡 Can play type:", videoEl.canPlayType("video/webm"));
+        });
     };
 
     let retries = 0;
@@ -305,6 +311,43 @@ export const createCall = async (callId, remoteVideoRef) => {
   });
 };
 
+// // 📥 Receive call (receiver)
+// export const receiveCall = async (callId, remoteVideoRef) => {
+//   const peerId = "receiver";
+
+//   while (!remoteVideoRef?.current) {
+//     console.warn("🕰️ Waiting for remoteVideoRef...");
+//     await new Promise((res) => setTimeout(res, 300));
+//   }
+
+//   if (!localStream) {
+//     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+//   }
+
+//   const offerSnap = await new Promise((resolve) => {
+//     onValue(ref(database, `calls/${callId}/offer`), resolve, { onlyOnce: true });
+//   });
+
+//   const offerData = offerSnap.val();
+//   if (!offerData) {
+//     console.warn("❌ No offer found");
+//     return;
+//   }
+
+//   const pc = createPeerConnection(remoteVideoRef, callId, peerId);
+//   peerConnections[peerId] = pc;
+
+//   await pc.setRemoteDescription(new RTCSessionDescription(offerData));
+//   const answer = await pc.createAnswer();
+//   await pc.setLocalDescription(answer);
+//   await set(ref(database, `calls/${callId}/answer`), answer);
+
+//   onChildAdded(ref(database, `calls/${callId}/candidates/${peerId}`), async (snapshot) => {
+//     const candidate = new RTCIceCandidate(snapshot.val());
+//     await pc.addIceCandidate(candidate);
+//   });
+// };
+
 // 📥 Receive call (receiver)
 export const receiveCall = async (callId, remoteVideoRef) => {
   const peerId = "receiver";
@@ -340,7 +383,7 @@ export const receiveCall = async (callId, remoteVideoRef) => {
     const candidate = new RTCIceCandidate(snapshot.val());
     await pc.addIceCandidate(candidate);
   });
-};
+}
 
 // 🔇 Toggle mute
 export const toggleMute = () => {
