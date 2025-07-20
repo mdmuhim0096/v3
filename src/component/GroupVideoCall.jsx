@@ -1,141 +1,109 @@
+
 import React, { useEffect, useRef, useState } from "react";
+import socket from "./socket";
+import { useNavigate } from "react-router-dom";
 import {
-  startMedia,
-  createCall,
-  receiveCall,
-  hangUp,
-  toggleMute,
-  listenForAnswers,
-  listenForCandidates,
+    startMedia,
+    createCall,
+    joinCall,
+    hangUp,
+    toggleMute
 } from "../utils/groupVideoCallUtils";
 
-import { useLocation, useNavigate } from "react-router-dom";
-import { get, ref } from "firebase/database";
-import { database } from "../firebase";
+import { useLocation } from "react-router-dom";
+import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
+import Timer from "./Timer";
 
-const GroupVideoCall = () => {
-  const { roomId, userId, isCaller } = useLocation()?.state || {};
-  const navigate = useNavigate();
+function GroupVideoCall() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { callId, role } = location?.state || {};
 
-  const localRef = useRef(null);
-  const [remoteStreams, setRemoteStreams] = useState({});
-  const [muted, setMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isCalling, setIsCalling] = useState(false);
+    const [mediaError, setMediaError] = useState(null);
 
-  useEffect(() => {
-    const setup = async () => {
-      try {
-        const stream = await startMedia();
-        if (localRef.current) {
-          localRef.current.srcObject = stream;
+    const localVideoRef = useRef(null);
+    const remoteVideoRef = useRef(null);
+    const localStreamRef = useRef(null);
+
+    // Caller: start call automatically
+    useEffect(() => {
+        const init = async () => {
+            try {
+                if (role === "caller") {
+                    const { localStream } = await startMedia(localVideoRef.current);
+                    localStreamRef.current = localStream;
+                    await createCall(callId, localStreamRef.current, remoteVideoRef.current);
+                }
+            } catch (err) {
+                console.error("Caller media error:", err);
+                setMediaError("Camera/mic error (maybe already in use or blocked).");
+            }
+        };
+        init();
+    }, [role, callId]);
+
+    // Receiver: only start media on button click //
+    const handleJoinCall = async () => {
+        try {
+            const { localStream } = await startMedia(localVideoRef.current);
+            localStreamRef.current = localStream;
+
+            await joinCall(callId, localStreamRef.current, remoteVideoRef.current);
+            setIsCalling(true);
+        } catch (err) {
+            console.error("Join error:", err);
+            setMediaError("Failed to access camera/mic. Is another tab using it?");
         }
-
-        if (isCaller) {
-          // Allow caller to generate an offer for anyone to receive
-          await createCall(roomId, userId, "any");
-
-          // Listen for receivers who reply
-          listenForAnswers(roomId, userId, (stream, peerId) => {
-            setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
-          });
-
-          listenForCandidates(roomId, userId);
-        }
-      } catch (err) {
-        console.error("❌ Call setup error:", err);
-        alert("❌ Failed to start call.");
-      }
     };
 
-    setup();
-
-    return () => {
-      hangUp(roomId);
+    async function handleHangUp() {
+        try {
+            await hangUp(callId);
+            navigate("/chatroom");
+            window.location.reload();
+        } catch (err) {
+            console.error("Hang up error:", err);
+        }
     };
-  }, []);
 
-  const handleReceive = async () => {
-    try {
-      const offersRef = ref(database, `rooms/${roomId}/offers`);
-      const snapshot = await get(offersRef);
-      if (snapshot.exists()) {
-        const offers = snapshot.val();
-        const [callerId] = Object.keys(offers);
-        await receiveCall(roomId, callerId, userId, (stream, peerId) => {
-          setRemoteStreams((prev) => ({ ...prev, [peerId]: stream }));
-        });
+    const handleMute = () => {
+        const muted = toggleMute(localVideoRef.current);
+        setIsMuted(muted);
+    };
 
-        listenForCandidates(roomId, userId);
-      } else {
-        alert("❌ No incoming calls found.");
-      }
-    } catch (err) {
-      console.error("❌ Receive call error:", err);
-    }
-  };
+    return (
+        <div className="w-full h-screen flex justify-center items-center md:p-4">
+            <div className="relative w-full h-full overflow-hidden flex flex-col items-center">
+                <video ref={localVideoRef} autoPlay muted playsInline className="h-40 w-24 md:w-64 md:h-40 rounded shadow -scale-x-125 absolute object-fill z-20 top-0 md:left-9 left-3" />
+                <video ref={remoteVideoRef} autoPlay playsInline className="object-fill w-full h-full absolute top-0 left-0" />
 
-  const handleMute = () => {
-    const isNowMuted = toggleMute();
-    setMuted(isNowMuted);
-  };
+                <div className="absolute z-10 bottom-1">
+                    {isCalling ? <h6 className="text-center mb-6">
+                        <Timer isCallActive={isCalling} />
+                    </h6> : null}
 
-  const hangUpCall = () => {
-    hangUp(roomId);
-    navigate("/chatroom");
-    window.location.reload();
-  };
+                    <div className="flex justify-center gap-6 ">
+                        {role === "receiver" && (
+                            <span onClick={handleJoinCall} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border text-green-600">
+                                <Phone />
+                            </span>
+                        )}
+                        <span onClick={handleHangUp} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border text-red-500">
+                            <PhoneOff />
+                        </span>
 
-  return (
-    <div style={{ padding: 20 }}>
-      <h2>Room: {roomId}</h2>
+                        <span onClick={handleMute} className="p-1 rounded-lg hover:border-blue-500 duration-200 cursor-pointer hover:border">
+                            {isMuted ? <MicOff className="text-red-600" /> : <Mic className="text-blue-600" />}
+                        </span>
+                    </div>
+                </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        {/* Local video */}
-        <div>
-          <p><strong>You</strong></p>
-          <video
-            ref={localRef}
-            autoPlay
-            muted
-            playsInline
-            style={{ width: 200, border: "2px solid #444", borderRadius: 8 }}
-          />
+            </div>
         </div>
-
-        {/* Remote video streams */}
-        {Object.entries(remoteStreams).map(([uid, stream]) => (
-          <VideoTile key={uid} stream={stream} userId={uid} />
-        ))}
-      </div>
-
-      <div style={{ marginTop: 20 }}>
-        {!isCaller && <button onClick={handleReceive}>📞 Receive Call</button>}
-        <button onClick={handleMute}>{muted ? "🔇 Unmute" : "🔊 Mute"}</button>
-        <button onClick={hangUpCall}>❌ Hang Up</button>
-      </div>
-    </div>
-  );
-};
-
-const VideoTile = ({ stream, userId }) => {
-  const videoRef = useRef();
-
-  useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
-
-  return (
-    <div>
-      <p><strong>{userId}</strong></p>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        style={{ width: 200, border: "2px solid #888", borderRadius: 8 }}
-      />
-    </div>
-  );
-};
+    );
+}
 
 export default GroupVideoCall;
+

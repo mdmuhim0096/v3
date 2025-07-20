@@ -134,9 +134,9 @@ const ChatRoom = () => {
     useEffect(() => {
         const handelRoom = async (data) => {
             console.log("Room data received:", data);
-            const isMatch = await isMatchGroup(data.roomId);
+            const isMatch = await isMatchGroup(data);
             if (isMatch) {
-                navigate("/groupvideocall", { state: { roomId: data.roomId, isCaller: false, userId: data.userId } });
+                navigate("/groupvideocall", { state: { callId: data, role: "receiver"} });
             }
         }
 
@@ -145,7 +145,6 @@ const ChatRoom = () => {
             socket.off("join_room", handelRoom);
         }
     }, [])
-
 
     const get_chats = async (riciver, sender) => {
         await axios.post(server_port + "/api/people/getChat", { riciver, sender })
@@ -834,7 +833,7 @@ const ChatRoom = () => {
                                 <h1 className='text-center my-2'>{localStorage.getItem("userName")}</h1>
                             </div>
                             <div className='flex gap-5'>
-                                <Link to={isCahtTab ? "/v" : "/groupvideocall"} state={isCahtTab ? { userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") } : { roomId: localStorage.getItem("groupId"), isCaller: true, userId: localStorage.getItem("myId") }} >
+                                <Link to={isCahtTab ? "/v" : "/groupvideocall"} state={isCahtTab ? { userId: localStorage.getItem("userId"), isDail: true, callId: __callId__ + localStorage.getItem("userId") } : { callId: localStorage.getItem("groupId"), role: "caller"}} >
                                     <Video />
                                 </Link>
                                 <Link to={"/audiocall"} state={{ callId: __callId__ + localStorage.getItem("userId"), userId: localStorage.getItem("userId"), isDail: true, info: { img: localStorage.getItem("myImage"), name_: localStorage.getItem("myName") }, role: "caller" }}>
