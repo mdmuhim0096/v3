@@ -29,6 +29,70 @@ export const startMedia = async (videoRef) => {
   }
 };
 
+// const createPeerConnection = (remoteRef, callId, peerId) => {
+//   const pc = new RTCPeerConnection({
+//     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//   });
+
+//   if (localStream) {
+//     localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+//   }
+
+//   pc.ontrack = (event) => {
+//     const [remoteStream] = event.streams;
+//     if (!remoteStream) return;
+
+//     let retries = 0;
+//     let attached = false;
+
+//     const attachRemoteStream = () => {
+//       const videoEl = remoteRef?.current;
+//       if (!videoEl) {
+//         if (retries < 20) {
+//           retries++;
+//           return setTimeout(attachRemoteStream, 200);
+//         } else {
+//           console.warn("❌ remote video element not found after 20 retries");
+//           return;
+//         }
+//       }
+
+//       if (!attached) {
+//         videoEl.srcObject = remoteStream;
+//         videoEl.muted = true; // still needed for autoplay on mobile
+//         videoEl.autoplay = true;
+//         videoEl.playsInline = true;
+//         attached = true;
+//       }
+
+//       videoEl
+//         .play()
+//         .then(() => {
+//           console.log("▶️ Remote video playing");
+//         })
+//         .catch((err) => {
+//           if (retries < 10) {
+//             console.warn("🔄 Retrying remote video playback...", err.message);
+//             retries++;
+//             setTimeout(attachRemoteStream, 300); // Retry only if play fails
+//           } else {
+//             console.error("❌ Still failed to play remote video after 10 retries");
+//           }
+//         });
+//     };
+//     attachRemoteStream();
+//   };
+
+//   pc.onicecandidate = (event) => {
+//     if (event.candidate) {
+//       const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
+//       push(candidateRef, event.candidate.toJSON());
+//     }
+//   };
+
+//   return pc;
+// };
+
 const createPeerConnection = (remoteRef, callId, peerId) => {
   const pc = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -42,45 +106,40 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
     const [remoteStream] = event.streams;
     if (!remoteStream) return;
 
-    let retries = 0;
-    let attached = false;
+    const videoEl = remoteRef?.current;
+    if (!videoEl) {
+      console.warn("❌ remote video element is null");
+      return;
+    }
 
-    const attachRemoteStream = () => {
-      const videoEl = remoteRef?.current;
-      if (!videoEl) {
-        if (retries < 20) {
-          retries++;
-          return setTimeout(attachRemoteStream, 200);
-        } else {
-          console.warn("❌ remote video element not found after 20 retries");
-          return;
-        }
-      }
+    // ✅ Assign once
+    if (videoEl.srcObject !== remoteStream) {
+      videoEl.srcObject = remoteStream;
+      videoEl.muted = true;
+      videoEl.autoplay = true;
+      videoEl.playsInline = true;
+    }
 
-      if (!attached) {
-        videoEl.srcObject = remoteStream;
-        videoEl.muted = true; // still needed for autoplay on mobile
-        videoEl.autoplay = true;
-        videoEl.playsInline = true;
-        attached = true;
-      }
+    let retryCount = 0;
 
+    const tryPlay = () => {
       videoEl
         .play()
         .then(() => {
           console.log("▶️ Remote video playing");
         })
         .catch((err) => {
-          if (retries < 10) {
-            console.warn("🔄 Retrying remote video playback...", err.message);
-            retries++;
-            setTimeout(attachRemoteStream, 300); // Retry only if play fails
+          console.warn("🔄 Retrying remote video playback:", err.message);
+          if (retryCount < 10) {
+            retryCount++;
+            setTimeout(tryPlay, 300); // Retry only play, not attach
           } else {
-            console.error("❌ Still failed to play remote video after 10 retries");
+            console.error("❌ Could not play remote video after 10 retries");
           }
         });
     };
-    attachRemoteStream();
+
+    tryPlay();
   };
 
   pc.onicecandidate = (event) => {
@@ -92,6 +151,7 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
 
   return pc;
 };
+
 
 export const createCall = async (callId, remoteVideoRef) => {
   const peerId = "caller";
