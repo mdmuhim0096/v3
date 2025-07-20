@@ -55,23 +55,31 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
         }
       }
 
+      // ✅ Assign stream and mute BEFORE playing
       videoEl.srcObject = remoteStream;
+      videoEl.muted = true;
       videoEl.autoplay = true;
       videoEl.playsInline = true;
 
-      videoEl
-        .play()
-        .then(() => console.log("▶️ Remote video playing"))
-        .catch((err) => {
-          console.warn("🔇 Could not autoplay remote video:", err.message);
-          videoEl.muted = true;
-          videoEl.play().catch((e) => console.error("❌ Still failed:", e));
+      const tryPlay = () => {
+        videoEl.play().then(() => {
+          console.log("▶️ Remote video playing");
+        }).catch((err) => {
+          if (retries < 10) {
+            console.warn("🔄 Retrying remote video playback...", err.message);
+            retries++;
+            setTimeout(tryPlay, 300);
+          } else {
+            console.error("❌ Still failed to play remote video after 10 retries");
+          }
         });
+      };
+
+      tryPlay();
     };
 
     attachRemoteStream();
   };
-
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
@@ -113,6 +121,7 @@ export const createCall = async (callId, remoteVideoRef) => {
 };
 
 export const receiveCall = async (callId, remoteVideoRef) => {
+
   const peerId = "receiver";
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -137,6 +146,7 @@ export const receiveCall = async (callId, remoteVideoRef) => {
     const candidate = new RTCIceCandidate(snapshot.val());
     await pc.addIceCandidate(candidate);
   });
+
 };
 
 export const toggleMute = () => {
