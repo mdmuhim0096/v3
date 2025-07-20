@@ -16,40 +16,6 @@ export const startMedia = async (videoRef) => {
   }
 };
 
-// const createPeerConnection = (remoteRef, callId, peerId) => {
-//   const pc = new RTCPeerConnection({
-//     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-//   });
-
-//   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-
-//   pc.ontrack = (event) => {
-//   const [remoteStream] = event.streams;
-//   console.log("📡 Remote stream received:", remoteStream);
-
-//   if (!remoteStream) return;
-
-//   const tryAttachVideo = () => {
-//     const videoEl = remoteRef?.current;
-//     if (videoEl) {
-//       videoEl.srcObject = remoteStream;
-//       const playPromise = videoEl.play();
-//       if (playPromise !== undefined) {
-//         playPromise.catch(err => {
-//           console.warn("🔇 Autoplay blocked or failed:", err.message);
-//         });
-//       }
-//     } else {
-//       console.warn("❌ remoteRef.current is null. Retrying...");
-//       setTimeout(tryAttachVideo, 300); // Retry after a short delay
-//     }
-//   };
-
-//   tryAttachVideo(); // Run initially
-// };
-
-//   return pc;
-// };
 
 const createPeerConnection = (remoteRef, callId, peerId) => {
   const pc = new RTCPeerConnection({
@@ -63,48 +29,37 @@ const createPeerConnection = (remoteRef, callId, peerId) => {
     console.warn("⚠️ localStream is null when trying to add tracks.");
   }
 
-  // ✅ Handle remote stream
   pc.ontrack = (event) => {
     const [remoteStream] = event.streams;
     console.log("📡 Remote stream received:", remoteStream);
+    console.log("🎥 Video tracks:", remoteStream.getVideoTracks());
 
     if (!remoteStream) return;
 
-    const videoEl = remoteRef?.current;
-    if (!videoEl) {
-      console.warn("❌ remoteRef.current is null. Will retry in 300ms...");
+    const tryAttach = () => {
+      const videoEl = remoteRef?.current;
+      if (!videoEl) {
+        console.warn("❌ remoteRef.current is null. Retrying...");
+        return setTimeout(tryAttach, 200);
+      }
+
+      // Only set if it's a different stream
+      if (videoEl.srcObject !== remoteStream) {
+        videoEl.srcObject = remoteStream;
+      }
+
+      // Play with a delay to avoid load interruption
       setTimeout(() => {
-        if (remoteRef?.current) {
-          remoteRef.current.srcObject = remoteStream;
-          remoteRef.current
-            .play()
-            .then(() => console.log("▶️ Remote video playing after retry"))
-            .catch((err) => console.warn("🔇 Retry autoplay failed:", err.message));
-        }
-      }, 300);
-      return;
-    }
+        videoEl
+          .play()
+          .then(() => console.log("✅ Remote video playing"))
+          .catch((err) =>
+            console.warn("🔇 Autoplay play() failed:", err.message)
+          );
+      }, 100); // 100ms delay helps avoid the autoplay/load error
+    };
 
-    // ✅ Only set if different
-    if (videoEl.srcObject !== remoteStream) {
-      videoEl.srcObject = remoteStream;
-    }
-
-    // ✅ Attempt playback
-    videoEl
-      .play()
-      .then(() => console.log("▶️ Remote video playing"))
-      .catch((err) => {
-        console.warn("🔇 Autoplay failed:", err.message);
-      });
-  };
-
-  // ✅ ICE candidate exchange
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      const candidateRef = ref(database, `calls/${callId}/candidates/${peerId}`);
-      push(candidateRef, event.candidate.toJSON());
-    }
+    tryAttach();
   };
 
   return pc;
