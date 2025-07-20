@@ -15,9 +15,14 @@ const GroupCall = () => {
   const [joined, setJoined] = useState(false);
   const { callId, role } = useLocation()?.state || {}
   const navigate = useNavigate();
+  useEffect(() => {
+    const media = async () => {
+       await startMedia(localVideoRef.current);
+    }
+    media();
+  }, []);
   
   const handleCreate = async () => {
-    await startMedia(localVideoRef.current);
     await createCall(callId, remoteVideoRef);
     setJoined(true);
   };
