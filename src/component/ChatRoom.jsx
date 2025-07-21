@@ -678,8 +678,8 @@ const ChatRoom = () => {
                             setIsBar(false)
                         }}>
                             <div className='flex justify-start items-center '>
-                                <img className='w-12 h-12 rounded-full' src={server_port + "/" + data.groupImage} alt="" />
-                                <h3>{data.name}</h3>
+                                <img className='w-12 h-12 rounded-full' src={server_port + "/" + data?.groupImage} alt="" />
+                                <h3>{data?.name}</h3>
                             </div>
 
                         </div>
@@ -858,7 +858,7 @@ const ChatRoom = () => {
                                         <div className={`mx-10 chat-bubble cursor-pointer sm:max-w-96`}>
                                             {
                                                 message?.mediaUrl?.includes("image") ? (<img src={server_port + "/" + message?.mediaUrl} className={`rounded-xl w-full hover:scale-105 duration-150 ${!message?.mediaUrl?.includes("image") ? "hidden" : ""}`} />) : message?.mediaUrl?.includes("audio") ? (<audio controls className={`${!message?.mediaUrl?.includes("audio") ? "hidden" : ""} w-full h-6`}>
-                                                    <source src={server_port + message?.mediaUrl} type="audio/mp3" />
+                                                    <source src={server_port + "/" + message?.mediaUrl} type="audio/mp3" />
                                                 </audio>)
                                                     : message?.mediaUrl?.includes("video") ? (<video className={!message?.mediaUrl?.includes("video") ? "hidden" : ""} controls>
                                                         <source src={server_port + "/" + message?.mediaUrl} type="video/mp4" />
@@ -872,7 +872,7 @@ const ChatRoom = () => {
                                                         </div>) : message?.mediaUrl == "share" ?
 
                                                             <div>
-                                                                {message?.share?.image == true ? <img src={server_port + "/" + message?.share?.media} className='w-full h-full rounded-xl' /> : message?.share?.video == true ? <video src={server_port + message?.share?.media} controls className='w-full h-full rounded-xl'></video> : null}
+                                                                {message?.share?.image == true ? <img src={server_port + "/" + message?.share?.media} className='w-full h-full rounded-xl' /> : message?.share?.video == true ? <video src={server_port +"/" + message?.share?.media} controls className='w-full h-full rounded-xl'></video> : null}
                                                                 <Link to={"/get_post_by_notification"} state={{ postId: message?.share?._id }}>go to comment</Link>
                                                             </div>
 
@@ -885,7 +885,7 @@ const ChatRoom = () => {
                                                                         </div> :
                                                                         <div>
                                                                             {message?.replay?.chatId?.mediaUrl?.includes("image") ?
-                                                                                <img src={server_port + "/" + message?.replay?.chatId?.mediaUrl} alt="" /> : message?.replay?.chatId?.mediaUrl?.includes("video") ? <video src={server_port + message?.replay.chatId?.mediaUrl} controls></video> : message?.replay?.chatId?.mediaUrl?.includes("audio") ? <audio src={server_port + message?.replay.chatId?.mediaUrl} controls /> : message?.replay.chatId.messageTextull}
+                                                                                <img src={server_port + "/" + message?.replay?.chatId?.mediaUrl} alt="" /> : message?.replay?.chatId?.mediaUrl?.includes("video") ? <video src={server_port + "/" +  message?.replay.chatId?.mediaUrl} controls></video> : message?.replay?.chatId?.mediaUrl?.includes("audio") ? <audio src={server_port + "/" +  message?.replay.chatId?.mediaUrl} controls /> : message?.replay.chatId.messageTextull}
 
                                                                         </div>
                                                                     }
@@ -980,33 +980,33 @@ const ChatRoom = () => {
 
                                     <div className={`max-w-[50%] min-w-[20%] h-auto rounded-xl ${data.sender?._id === sender ? " rounded-br-none" : "rounded-bl-none"} bg-blue-300 p-1 relative`}>
                                         {data?.messageType == "reply" ? <span className={`inline-block absolute z-30 ${data.sender?._id === sender ? "-left-5 -top-4 -rotate-45" : "-right-5 -top-4 rotate-45"}`}>reply</span> : null}
-                                        {data?.messageType == "text" ? <h4 className='px-2'>{data?.content}</h4> : data?.messageType == "image" ? <img src={server_port + "/" + data?.content} className='rounded-3xl' /> : data?.messageType == "video" ? <video src={server_port + data?.content} controls className='rounded-3xl' ></video> : data?.messageType == "audio" ? <audio src={server_port + data?.content} controls /> : data?.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data?.content}</a> : data?.messageType == "reply" ?
+                                        {data?.messageType == "text" ? <h4 className='px-2'>{data?.content}</h4> : data?.messageType == "image" ? <img src={server_port + "/" + data?.content} className='rounded-3xl' /> : data?.messageType == "video" ? <video src={server_port + "/" +  data?.content} controls className='rounded-3xl' ></video> : data?.messageType == "audio" ? <audio src={server_port + "/" +  data?.content} controls /> : data?.messageType == "link" ? <a href={data.content} target='_blank' className='italic text-indigo-800 px-2'>{data?.content}</a> : data?.messageType == "reply" ?
                                             <div>
                                                 <div className={`flex items-center gap-2 p-1 rounded-2xl ${data?.sender?._id === sender ? "justify-end" : "justify-start"}`}>
                                                     <img src={server_port + "/" + data?.replyTo?.senderImg} className={`rounded-full w-5 h-5`} />
-                                                    {data?.replyTo?.mtext.includes("image") ? <img src={server_port + "/" + data?.replyTo?.mtext} className='w-5/12 rounded-xl' /> : data?.replyTo?.mtext.includes("video") ? <video src={server_port + data?.replyTo?.mtext} controls className='rounded-3xl w-5/12' ></video> : data?.replyTo?.mtext.includes("audio") ? <audio src={server_port + data?.replyTo?.mtext} controls id='groupreplyaudio' /> : <h6>{data?.replyTo?.mtext}</h6>}
+                                                    {data?.replyTo?.mtext.includes("image") ? <img src={server_port + "/" + data?.replyTo?.mtext} className='w-5/12 rounded-xl' /> : data?.replyTo?.mtext.includes("video") ? <video src={server_port +  "/" +  data?.replyTo?.mtext} controls className='rounded-3xl w-5/12' ></video> : data?.replyTo?.mtext.includes("audio") ? <audio src={server_port +  "/" +  data?.replyTo?.mtext} controls id='groupreplyaudio' /> : <h6>{data?.replyTo?.mtext}</h6>}
                                                     <MoveRight />
-                                                    <img src={server_port + data?.sender?.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
+                                                    <img src={server_port +  "/" +  data?.sender?.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
                                                     <h4 className=''>{data?.content}</h4>
                                                 </div>
                                             </div> : data?.messageType == "share" ?
                                                 <div className='relative'>
                                                     <div>
                                                         {data?.share?.media.includes("/postImage/") ?
-                                                            <img src={server_port + data?.share?.media} className='rounded-xl' /> :
+                                                            <img src={server_port +  "/" +  data?.share?.media} className='rounded-xl' /> :
                                                             data?.share?.media.includes("/postVideo/") ?
-                                                                <video src={server_port + data?.share?.media} className='rounded-xl' controls ></video> :
+                                                                <video src={server_port +  "/" +  data?.share?.media} className='rounded-xl' controls ></video> :
                                                                 ""}
                                                     </div>
                                                     <div className='py-2 flex items-center justify-center gap-3'>
                                                         <h4>{data.content} that share by</h4>
                                                         <MoveRight />
-                                                        <img src={server_port + data?.sender?.image} className={`w-5 h-5 rounded-full`} />
+                                                        <img src={server_port + "/" +  data?.sender?.image} className={`w-5 h-5 rounded-full`} />
                                                         <h5>{data?.sender?.name}</h5>
                                                     </div>
                                                 </div> : ""}
                                         <div className={`flex ${data.sender?._id === sender ? "flex-row-reverse" : ""} items-center justify-start gap-3`}>
-                                            <img src={server_port + data?.sender?.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
+                                            <img src={server_port +  "/" +  data?.sender?.image} className={`w-5 h-5 rounded-full ${data.sender?._id === sender ? "float-right" : ""}`} />
                                             <h5 className='italic text-xs my-2'>{data?.createdAt}</h5>
                                             <Link to={"/get_post_by_notification"} state={{ postId: data?.share?._id }} className={`text-green-500 mx-5 hover:text-blue-600 underline ${data?.messageType == "share" ? "" : "hidden"}`}>go to comment</Link>
                                         </div>
@@ -1014,7 +1014,7 @@ const ChatRoom = () => {
                                             onClick={() => { setIsMenu(true); setGChatId(data?._id); setMesageWoner(data?.sender?._id); setMsgText(data?.content); setMsgWonerImage(data?.sender?.image); }} />
                                     </div>
                                     <div className='flex items-center justify-start my-2 '> {data?.seenBy?.map((seeUser, index) => (
-                                        <img key={index} src={server_port + seeUser?.image} className='w-4 h-4 rounded-full' />
+                                        <img key={index} src={server_port +  "/" +  seeUser?.image} className='w-4 h-4 rounded-full' />
                                     ))}</div>
                                 </div>
                             ))}
